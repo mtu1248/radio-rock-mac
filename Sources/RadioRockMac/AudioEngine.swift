@@ -132,6 +132,19 @@ final class AudioEngine: NSObject {
 
     // MARK: - Odtwarzanie
 
+    /// AVPlayer nie rozumie ICY (status "ICY 200 OK", metadane wplecione w
+    /// bajty audio) - stacje bywaja takim starym Shoutcastem, i wlasnie dlatego
+    /// appka NIGDY nie laczy sie z nimi bezposrednio. Zawsze idzie przez lokalny
+    /// serwer (/api/strumien), ktory juz umie to wszystko obsluzyc (patrz
+    /// serwer.py: _polacz/przekaz_strumien) i oddaje AVPlayerowi czysty dzwiek.
+    private func adresDoOdtwarzania(_ adresStacji: String) -> URL? {
+        guard let bazowy = adresBazowy,
+              let zakodowany = adresStacji.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
+            return URL(string: adresStacji)
+        }
+        return URL(string: "\(bazowy)api/strumien?url=\(zakodowany)")
+    }
+
     private func odtworz(indeks nowyIndeks: Int) {
         guard kolejka.indices.contains(nowyIndeks) else { return }
         indeks = nowyIndeks
@@ -141,7 +154,7 @@ final class AudioEngine: NSObject {
         timerPonowienia?.invalidate()
 
         let stacja = kolejka[nowyIndeks]
-        guard let url = URL(string: stacja.url) else {
+        guard let url = adresDoOdtwarzania(stacja.url) else {
             wyslijBlad()
             return
         }

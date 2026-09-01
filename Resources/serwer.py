@@ -185,10 +185,14 @@ def szukaj_w_bazie(fraza, limit=60, kraj=""):
     return {"ok": True, "powod": None, "wyniki": wyniki}
 
 
-def _polacz(url, pozostale_przekierowania=3):
+def _polacz(url, pozostale_przekierowania=3, icy_metadata=True):
     """Wlasny klient HTTP. Biblioteka standardowa odrzuca odpowiedzi serwerow
     Shoutcast, ktore zaczynaja sie od "ICY 200 OK" zamiast "HTTP/1.1 200 OK",
-    dlatego status i naglowki czytamy sami."""
+    dlatego status i naglowki czytamy sami.
+
+    icy_metadata=False jest uzywane przy przekazywaniu strumienia dalej do
+    natywnej appki (AVPlayer) - nie chcemy metadanych wplecionych w bajty
+    audio, appka i tak dostaje tytul osobno przez /api/utwor."""
     czesci = urllib.parse.urlsplit(url)
     host = czesci.hostname
     if not host:
@@ -203,14 +207,15 @@ def _polacz(url, pozostale_przekierowania=3):
         kontekst = ssl.create_default_context()
         gniazdo = kontekst.wrap_socket(gniazdo, server_hostname=host)
 
+    naglowek_icy = "Icy-MetaData: 1\r\n" if icy_metadata else ""
     zapytanie = (
         "GET %s HTTP/1.1\r\n"
         "Host: %s\r\n"
         "User-Agent: Mozilla/5.0 (Macintosh) RadioRock/1.0\r\n"
-        "Icy-MetaData: 1\r\n"
+        "%s"
         "Accept: */*\r\n"
         "Connection: close\r\n\r\n"
-    ) % (sciezka, czesci.netloc)
+    ) % (sciezka, czesci.netloc, naglowek_icy)
     gniazdo.sendall(zapytanie.encode("utf-8"))
     strumien = gniazdo.makefile("rb")
 
@@ -237,7 +242,7 @@ def _polacz(url, pozostale_przekierowania=3):
         if pozostale_przekierowania <= 0:
             raise ValueError("zbyt wiele przekierowan")
         nowy_adres = urllib.parse.urljoin(url, naglowki["location"])
-        return _polacz(nowy_adres, pozostale_przekierowania - 1)
+        return _polacz(nowy_adres, pozostale_przekierowania - 1, icy_metadata)
 
     if kod >= 400:
         strumien.close()
@@ -408,6 +413,14 @@ class Uchwyt(http.server.SimpleHTTPRequestHandler):
         if rozbite.path == "/api/wersja":
             self.odpowiedz_json({"app": "radio-rock", "wersja": "7.2"})
             return
+        if rozbite.path == "/api/strumien":
+            parametry = urllib.parse.parse_qs(rozbite.query)
+            adres = (parametry.get("url") or [""])[0]
+            if not adres.startswith("http"):
+                self.send_error(400)
+                return
+            self.przekaz_strumien(adres)
+            return
         super().do_GET()
 
     def do_POST(self):
@@ -451,6 +464,66 @@ class Uchwyt(http.server.SimpleHTTPRequestHandler):
             self.odpowiedz_json({"ok": True, "zapisane": len(czyste), "ukryte": len(ukryte)})
         except Exception as blad:
             self.odpowiedz_json({"ok": False, "powod": str(blad)}, 400)
+
+    def przekaz_strumien(self, adres):
+        """Posrednik miedzy AVPlayerem (natywna appka Mac) a stacja radiowa.
+        AVPlayer nie rozumie ICY (metadane wplecione w bajty audio, status
+        "ICY 200 OK" zamiast HTTP), a Python juz to potrafi (patrz _polacz) -
+        wiec appka laczy sie zawsze tutaj, nigdy bezposrednio ze stacja."""
+        try:
+            gniazdo, strumien, naglowki = _polacz(adres, icy_metadata=False)
+        except Exception:
+            try:
+                self.send_error(502)
+            except Exception:
+                pass
+            return
+
+        try:
+            typ = naglowki.get("content-type") or "audio/mpeg"
+            self.send_response(200)
+            self.send_header("Content-Type", typ)
+            self.end_headers()
+
+            metaint_naglowek = naglowki.get("icy-metaint")
+            metaint = int(metaint_naglowek) if metaint_naglowek and metaint_naglowek.isdigit() else 0
+
+            while True:
+                if metaint > 0:
+                    pozostalo = metaint
+                    while pozostalo > 0:
+                        porcja = strumien.read(min(8192, pozostalo))
+                        if not porcja:
+                            return
+                        pozostalo -= len(porcja)
+                        self.wfile.write(porcja)
+                    bajt_dlugosci = strumien.read(1)
+                    if not bajt_dlugosci:
+                        return
+                    dlugosc = bajt_dlugosci[0] * 16
+                    pozostalo_metadanych = dlugosc
+                    while pozostalo_metadanych > 0:
+                        porcja = strumien.read(min(4096, pozostalo_metadanych))
+                        if not porcja:
+                            return
+                        pozostalo_metadanych -= len(porcja)
+                    # metadane celowo pomijane - AVPlayer dostaje czysty dzwiek,
+                    # tytul appka pobiera osobno przez /api/utwor
+                else:
+                    porcja = strumien.read(8192)
+                    if not porcja:
+                        return
+                    self.wfile.write(porcja)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            pass
+        except Exception:
+            pass
+        finally:
+            try:
+                strumien.close()
+                gniazdo.close()
+            except Exception:
+                pass
 
     def odpowiedz_json(self, dane, kod=200):
         tresc = json.dumps(dane, ensure_ascii=False).encode("utf-8")
