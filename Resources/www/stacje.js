@@ -1,0 +1,177 @@
+/* ------------------------------------------------------------------
+   Katalog stacji. Trzy kategorie do wyboru przy budowaniu list.
+   Adresy pochodza z publicznych zestawien i bywaja zmieniane przez
+   nadawcow - w aplikacji jest przycisk "Sprawdz", ktory testuje je
+   po kolei i oznacza te, ktore przestaly odpowiadac.
+   ------------------------------------------------------------------ */
+
+const KATALOG = [
+  {
+    id: 'rock',
+    nazwa: 'Rockowe',
+    pozycje: [
+      { nazwa: 'Antyradio',             url: 'https://an.cdn.eurozet.pl/ant-waw.mp3' },
+      { nazwa: 'Antyradio Katowice',    url: 'https://an.cdn.eurozet.pl/ant-kat.mp3' },
+      { nazwa: 'Anty Classic Rock',     url: 'https://an.cdn.eurozet.pl/ANTCLA.mp3' },
+      { nazwa: 'Anty Hard',             url: 'https://an.cdn.eurozet.pl/ANTHAR.mp3' },
+      { nazwa: 'Anty Ballads',          url: 'https://an.cdn.eurozet.pl/ANTBAL.mp3' },
+      { nazwa: 'Anty Made in Polska',   url: 'https://an.cdn.eurozet.pl/ANTPOL.mp3' },
+      { nazwa: 'Anty Unplugged',        url: 'https://an.cdn.eurozet.pl/ANTUNP.mp3' },
+      { nazwa: 'Anty Woodstock',        url: 'https://an.cdn.eurozet.pl/ANTWOD.mp3' },
+      { nazwa: 'Anty Covers',           url: 'https://an.cdn.eurozet.pl/ANTCOV.mp3' },
+      { nazwa: 'Anty Greatest',         url: 'https://an.cdn.eurozet.pl/ANTGRE.mp3' },
+      { nazwa: 'Anty Live',             url: 'https://an.cdn.eurozet.pl/ANTLIV.mp3' },
+      { nazwa: 'Rock Radio',            url: 'https://radiostream.pl/tuba9006-1.mp3' },
+      { nazwa: 'Eska Rock',             url: 'https://waw.ic.smcdn.pl/5380-1.mp3' },
+      { nazwa: 'Eska Rock Klasyka',     url: 'https://waw.ic.smcdn.pl/6070-1.mp3' },
+      { nazwa: 'Eska Rock Ballady',     url: 'https://waw.ic.smcdn.pl/6010-1.mp3' },
+      { nazwa: 'Rockserwis FM',         url: 'http://stream9.nadaje.com:8002/live' },
+      { nazwa: 'Toksyna FM',            url: 'http://s01.toksyna.fm:8000/stream' },
+      { nazwa: 'Rock Antenne (DE)',     url: 'https://mp3channels.webradio.de/rockantenne' },
+      { nazwa: 'Rock Antenne (AT)',     url: 'https://mp3channels.webradio.de/rockantenne-oesterreich' },
+      { nazwa: 'Radio Bob Classic',     url: 'http://streams.radiobob.de/bob-classicrock/mp3-192/streams.radiobob.de/' },
+      { nazwa: 'Radio Bob Metal',       url: 'http://streams.radiobob.de/bob-metal/mp3-192/streams.radiobob.de/' },
+      { nazwa: 'Radio Bob Wacken',      url: 'http://streams.radiobob.de/bob-wacken/mp3-192/streams.radiobob.de/' },
+      { nazwa: 'Radio Bob Punk',        url: 'http://streams.radiobob.de/bob-punk/mp3-192/streams.radiobob.de/' },
+      { nazwa: 'KINK (NL)',             url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/KINK.mp3' },
+      { nazwa: 'KINK Distortion (NL)',  url: 'https://playerservices.streamtheworld.com/api/livestream-redirect/KINK_DISTORTION.mp3' },
+      { nazwa: 'Life Radio Classic',    url: 'https://stream.liferadio.at/clrock/mp3-192/app/' },
+      { nazwa: 'ROKS Classic Rock (UA)',url: 'https://online.radioroks.ua/RadioROKS_ClassicRock_HD' },
+      { nazwa: 'Hard Rock Heaven',      url: 'https://hydra.cdnstream.com/1521_128' },
+      { nazwa: 'Hardrock Vinyl',        url: 'https://stream.laut.fm/hardrockvinyl' },
+      { nazwa: 'Metal Detector',        url: 'https://ice1.somafm.com/metal-128-mp3' },
+      { nazwa: 'Vietnam War Rock',      url: 'https://stream.zeno.fm/g91qxch7gv8uv' },
+      { nazwa: 'Metal Express Radio',   url: 'http://5.135.154.69:11590/' },
+      { nazwa: 'Anty Makak',             url: 'https://an.cdn.eurozet.pl/ANTMAK.mp3' },
+      { nazwa: 'Radio Bob Best of Rock',  url: 'http://streams.radiobob.de/bob-bestofrock/mp3-192/streams.radiobob.de/' },
+      { nazwa: 'Radio Bob Rock Hits',     url: 'http://streams.radiobob.de/bob-rockhits/mp3-192/streams.radiobob.de/' },
+      { nazwa: 'Radio Bob 80er Rock',     url: 'http://streams.radiobob.de/bob-80srock/mp3-192/streams.radiobob.de/' },
+      { nazwa: 'Radio Bob 90er Rock',     url: 'http://streams.radiobob.de/bob-90srock/mp3-192/streams.radiobob.de/' },
+      { nazwa: 'Radio Bob Alternative',   url: 'http://streams.radiobob.de/bob-alternative/mp3-192/streams.radiobob.de/' },
+      { nazwa: 'Radio Bob AC/DC',         url: 'http://streams.radiobob.de/bob-acdc/mp3-192/streams.radiobob.de/' },
+      { nazwa: 'Radio Bob Queen',         url: 'http://streams.radiobob.de/bob-queen/mp3-192/streams.radiobob.de/' },
+      { nazwa: 'Klassik Radio Rock',      url: 'http://stream.klassikradio.de/klassikrock/mp3-192/www.klassikradio.de/' },
+      { nazwa: 'Rock Meets Classic',      url: 'http://stream.klassikradio.de/rockclassic/mp3-192/www.klassikradio.de/' },
+      { nazwa: 'Arrow Classic Rock (NL)', url: 'http://stream.gal.io/arrow' },
+      { nazwa: 'Monsters of Rock',        url: 'http://ice55.securenetsystems.net/DASH14' },
+      { nazwa: 'Classic Rock Florida',    url: 'https://streamingv2.shoutcast.com/ClassicRockFlorida' },
+      { nazwa: 'Rock Arsenal (RU)',       url: 'http://online.rockarsenal.ru:8000/rockarsenal_aacplus' },
+      { nazwa: 'FFH Rock (DE)',           url: 'http://mp3.ffh.de/ffhchannels/hqrock.mp3' },
+      { nazwa: 'La Grosse Radio Rock',    url: 'http://hd.lagrosseradio.info:8000/lagrosseradio-rock-192.mp3' },
+      { nazwa: 'Morow Prog Rock',         url: 'http://stream.fr.morow.com:8080/morow_hi.aacp' },
+      { nazwa: 'Progressive Rock Radio',  url: 'http://deliciousagony.streamguys1.com' },
+      { nazwa: 'Death.FM',                url: 'http://hi5.death.fm/;stream.mp3' },
+      { nazwa: 'Mannard Metal Radio',     url: 'http://72.239.233.53:6969/high.mp3' },
+      { nazwa: 'Metal Live Radio',        url: 'http://gra.radiowom.pl:8738/stream' },
+      { nazwa: 'Hard Rock Hell Radio',    url: 'https://tbfmonli.radioca.st/;' },
+      { nazwa: 'La Grosse Radio Metal',   url: 'http://hd.lagrosseradio.info:8000/lagrosseradio-metal-192.mp3' }
+    ]
+  },
+  {
+    id: 'ogolne',
+    nazwa: 'Ogólne',
+    pozycje: [
+      { nazwa: 'RMF FM',               url: 'http://195.150.20.7/rmf_fm' },
+      { nazwa: 'RMF MAXXX',            url: 'http://195.150.20.7/rmf_maxxx' },
+      { nazwa: 'RMF 24',               url: 'http://195.150.20.7/rmf_24' },
+      { nazwa: "RMF 80's",             url: 'http://195.150.20.6/rmf_80s' },
+      { nazwa: 'Radio ZET',            url: 'https://zt.cdn.eurozet.pl/zet-net.mp3' },
+      { nazwa: 'Chillizet',            url: 'https://ch.cdn.eurozet.pl/chi-net.mp3' },
+      { nazwa: 'Meloradio',            url: 'http://ml.cdn.eurozet.pl/mel-krk.mp3' },
+      { nazwa: 'Radio Eska',           url: 'https://waw.ic.smcdn.pl/2380-1.mp3' },
+      { nazwa: 'Radio Plus',           url: 'https://pl04.cdn.eurozet.pl/plu-waw.mp3?redirected=04' },
+      { nazwa: 'Radio Parada',         url: 'http://stream4.nadaje.com:15274/live' },
+      { nazwa: 'Radio 357',            url: 'https://stream.rcs.revma.com/an1ugyygzk8uv' },
+      { nazwa: 'Radio Nowy Świat',     url: 'http://stream.rcs.revma.com/ypqt40u0x1zuv' },
+      { nazwa: 'Muzo FM',              url: 'https://stream.rcs.revma.com/1nnezw8qz7zuv' },
+      { nazwa: 'Radio Pogoda',         url: 'http://stream10.radioagora.pl:80/tuba143-1.mp3' },
+      { nazwa: 'TOK FM',               url: 'http://wroclaw.radio.pionier.net.pl:8000/pl/tuba10-1.mp3' },
+      { nazwa: 'Radio Wnet',           url: 'http://audio.radiownet.pl:8000/stream' },
+      { nazwa: 'Trendy Radio',         url: 'http://stream.trendyradio.pl:8000/h' },
+      { nazwa: 'Twoja Polska Stacja',  url: 'http://sluchaj.twojapolskastacja.pl:8068/' },
+      { nazwa: 'Muzyczne Radio',       url: 'http://stream3.nadaje.com:9000/' },
+      { nazwa: 'Radio Q',              url: 'http://37.130.30.166:8020/' },
+      { nazwa: 'Radio 7',              url: 'http://stream.radio7.pl:8000' },
+      { nazwa: 'Nasze Radio',          url: 'https://online.nasze.fm:8443/stream' },
+      { nazwa: 'Radio Łódź',           url: 'http://217.113.224.171/RadioLodz-1.mp3' },
+      { nazwa: 'Radio Łódź Extra',     url: 'http://217.113.224.171:80/RadioLodz-2-HQ.aac' },
+      { nazwa: 'Radio Silesia',        url: 'https://stream.rcs.revma.com/xq23sp6fyyzuv' },
+      { nazwa: 'Radio Yanosik',        url: 'http://n25a-eu.rcs.revma.com:80/sn11544ebhuvv' }
+    ]
+  },
+  {
+    id: 'tematyczne',
+    nazwa: 'Tematyczne',
+    pozycje: [
+      { nazwa: 'Groove Salad',        url: 'https://ice1.somafm.com/groovesalad-128-mp3' },
+      { nazwa: 'Drone Zone',          url: 'https://ice1.somafm.com/dronezone-128-mp3' },
+      { nazwa: 'Space Station',       url: 'https://ice1.somafm.com/spacestation-128-mp3' },
+      { nazwa: 'Deep Space One',      url: 'https://ice1.somafm.com/deepspaceone-128-mp3' },
+      { nazwa: 'Underground 80s',     url: 'https://ice1.somafm.com/u80s-128-mp3' },
+      { nazwa: 'Left Coast 70s',      url: 'https://ice1.somafm.com/seventies-128-mp3' },
+      { nazwa: 'Indie Pop Rocks',     url: 'https://ice1.somafm.com/indiepop-128-mp3' },
+      { nazwa: 'Boot Liquor',         url: 'https://ice1.somafm.com/bootliquor-128-mp3' },
+      { nazwa: 'Secret Agent',        url: 'https://ice1.somafm.com/secretagent-128-mp3' },
+      { nazwa: 'Lush',                url: 'https://ice1.somafm.com/lush-128-mp3' },
+      { nazwa: 'Beat Blender',        url: 'https://ice1.somafm.com/beatblender-128-mp3' },
+      { nazwa: 'Fluid',               url: 'https://ice1.somafm.com/fluid-128-mp3' },
+      { nazwa: 'Poptron',             url: 'https://ice1.somafm.com/poptron-128-mp3' },
+      { nazwa: 'Covers',              url: 'https://ice1.somafm.com/covers-128-mp3' },
+      { nazwa: 'Thistle Radio',       url: 'https://ice1.somafm.com/thistle-128-mp3' },
+      { nazwa: 'DEF CON Radio',       url: 'https://ice1.somafm.com/defcon-128-mp3' },
+      { nazwa: 'Radio Pasja POP',     url: 'http://91.232.4.33:8084/stream2' },
+      { nazwa: 'Radio Pasja Klubowa', url: 'http://91.232.4.33:9460/stream2' },
+      { nazwa: 'Radio Pasja Chill',   url: 'http://91.232.4.33:8108/stream2' },
+      { nazwa: 'Radio Pasja Relaks',  url: 'http://91.232.4.33:8102/stream2' },
+      { nazwa: 'Radio Pasja Dance',   url: 'http://91.232.4.33:9466/stream2' },
+      { nazwa: 'Radio Italo Dance',   url: 'http://radio.italodance.pl:7694' },
+      { nazwa: 'Radio Top 80',        url: 'http://top80.pl:8000/listen.mp3' },
+      { nazwa: 'Radio Mirage',        url: 'http://s0.radiohost.pl:9569/' },
+      { nazwa: 'Energy 2000',         url: 'http://energy2000.radioparty.pl:8005/' },
+      { nazwa: 'Disco Polo FM',       url: 'http://137.74.5.240:443/;stream.mp3' },
+      { nazwa: 'Laserbeat FM',        url: 'http://stream.laut.fm/laserbeat-fm' },
+      { nazwa: 'Move Da House',       url: 'http://uk7.internet-radio.com:8000/' },
+      { nazwa: 'Classic FM (UK)',     url: 'http://media-ice.musicradio.com/ClassicFMMP3' },
+      { nazwa: 'Smooth (UK)',         url: 'http://media-ice.musicradio.com/SmoothLondonMP3' },
+      { nazwa: 'Heart (UK)',          url: 'http://media-ice.musicradio.com/HeartUKMP3' },
+      { nazwa: 'SLAY Radio',          url: 'http://relay1.slayradio.org:8300/' }
+    ]
+  }
+];
+
+const LISTY_STARTOWE = [
+  {
+    nazwa: 'Rock',
+    stacje: [
+      'https://an.cdn.eurozet.pl/ant-waw.mp3',
+      'https://an.cdn.eurozet.pl/ANTCLA.mp3',
+      'https://an.cdn.eurozet.pl/ANTHAR.mp3',
+      'https://an.cdn.eurozet.pl/ANTPOL.mp3',
+      'https://an.cdn.eurozet.pl/ANTWOD.mp3',
+      'https://an.cdn.eurozet.pl/ANTUNP.mp3',
+      'https://radiostream.pl/tuba9006-1.mp3',
+      'https://waw.ic.smcdn.pl/5380-1.mp3',
+      'https://mp3channels.webradio.de/rockantenne',
+      'https://playerservices.streamtheworld.com/api/livestream-redirect/KINK_DISTORTION.mp3',
+      'https://hydra.cdnstream.com/1521_128',
+      'https://ice1.somafm.com/metal-128-mp3'
+    ]
+  },
+  {
+    nazwa: 'Ogólne',
+    stacje: [
+      'http://195.150.20.7/rmf_fm',
+      'http://195.150.20.7/rmf_maxxx',
+      'http://195.150.20.7/rmf_24',
+      'http://195.150.20.6/rmf_80s',
+      'https://zt.cdn.eurozet.pl/zet-net.mp3',
+      'https://ch.cdn.eurozet.pl/chi-net.mp3',
+      'https://waw.ic.smcdn.pl/2380-1.mp3',
+      'http://stream4.nadaje.com:15274/live',
+      'https://stream.rcs.revma.com/an1ugyygzk8uv',
+      'http://stream.rcs.revma.com/ypqt40u0x1zuv',
+      'https://stream.rcs.revma.com/1nnezw8qz7zuv',
+      'http://wroclaw.radio.pionier.net.pl:8000/pl/tuba10-1.mp3'
+    ]
+  }
+];

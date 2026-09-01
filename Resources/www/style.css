@@ -1,0 +1,996 @@
+/* ==================================================================
+   Radio Rock
+   Uklad poziomy pod panel samochodowy (mieści się bez przewijania
+   na typowych ekranach 800x480 i 1024x600).
+   5 skorek (geometria) x 5 palet (kolory) = 25 kombinacji.
+   ================================================================== */
+
+/* ============================ PALETY ============================== */
+
+[data-paleta="stal"] {
+  --tlo-1: #2a2f35; --tlo-2: #171a1d;
+  --obudowa-a: #dfe3e8; --obudowa-b: #b4bbc3; --obudowa-ramka: #9aa2ac;
+  --panel-linia: #9aa2ac;
+  --napis: #2b3138; --napis-slaby: #6a727c;
+  --ekran-tlo: #08100f; --ekran: #46e0bd; --ekran-slaby: #2a7f6c;
+  --kafel-a: #454c55; --kafel-b: #2b3138; --kafel-napis: #dde2e8;
+  --kafel-gra-a: #1d4d45; --kafel-gra-b: #123832;
+  --akcent: #1d4d45; --akcent-napis: #eaf7f3;
+  --dioda: #ff4b3e;
+  --panel-tlo: #eef1f4; --pole-tlo: #ffffff;
+  --guzik-a: #f2f5f8; --guzik-b: #c6ccd4; --guzik-cien: #8f97a1; --guzik-napis: #2b3138;
+}
+
+[data-paleta="bursztyn"] {
+  --tlo-1: #2b2620; --tlo-2: #14110d;
+  --obudowa-a: #2f2a23; --obudowa-b: #221e18; --obudowa-ramka: #453d31;
+  --panel-linia: #453d31;
+  --napis: #e6dcc9; --napis-slaby: #9c8f78;
+  --ekran-tlo: #0f0c07; --ekran: #ffb43c; --ekran-slaby: #8a6320;
+  --kafel-a: #443c30; --kafel-b: #2c261e; --kafel-napis: #e6dcc9;
+  --kafel-gra-a: #6b4a15; --kafel-gra-b: #4a330d;
+  --akcent: #b57b1c; --akcent-napis: #1b1610;
+  --dioda: #ff5b3a;
+  --panel-tlo: #241f18; --pole-tlo: #1a1610;
+  --guzik-a: #554b3c; --guzik-b: #362f26; --guzik-cien: #14110d; --guzik-napis: #e6dcc9;
+}
+
+[data-paleta="granat"] {
+  --tlo-1: #131c2e; --tlo-2: #070b13;
+  --obudowa-a: #1b2740; --obudowa-b: #141d31; --obudowa-ramka: #2c3c5e;
+  --panel-linia: #2c3c5e;
+  --napis: #d6e2f5; --napis-slaby: #7d8fb0;
+  --ekran-tlo: #060c18; --ekran: #7fc4ff; --ekran-slaby: #3d6a94;
+  --kafel-a: #2a3a58; --kafel-b: #1c2740; --kafel-napis: #d6e2f5;
+  --kafel-gra-a: #1e4c78; --kafel-gra-b: #143458;
+  --akcent: #2f6fa8; --akcent-napis: #eaf3ff;
+  --dioda: #ff8a5c;
+  --panel-tlo: #162034; --pole-tlo: #0d1626;
+  --guzik-a: #33456a; --guzik-b: #202e4a; --guzik-cien: #0d1420; --guzik-napis: #d6e2f5;
+}
+
+[data-paleta="czern"] {
+  --tlo-1: #1a1a1c; --tlo-2: #0a0a0b;
+  --obudowa-a: #232326; --obudowa-b: #17171a; --obudowa-ramka: #42424a;
+  --panel-linia: #4a4a54;
+  --napis: #f2f2f5; --napis-slaby: #b0b0ba;
+  --ekran-tlo: #0b0b0d; --ekran: #ff8a80; --ekran-slaby: #c25e54;
+  --kafel-a: #34343c; --kafel-b: #222228; --kafel-napis: #f2f2f5;
+  --kafel-gra-a: #96352b; --kafel-gra-b: #6d2018;
+  --akcent: #d1483b; --akcent-napis: #fff6f4;
+  --dioda: #ff2d1f;
+  --panel-tlo: #1a1a1d; --pole-tlo: #131316;
+  --guzik-a: #3c3c44; --guzik-b: #24242a; --guzik-cien: #0a0a0b; --guzik-napis: #e4e4e7;
+}
+
+[data-paleta="papier"] {
+  --tlo-1: #efe9dd; --tlo-2: #ddd5c5;
+  --obudowa-a: #fbf8f2; --obudowa-b: #ece5d8; --obudowa-ramka: #a99e88;
+  --panel-linia: #9c9179;
+  --napis: #24221d; --napis-slaby: #5f594e;
+  --ekran-tlo: #262019; --ekran: #ffcf7a; --ekran-slaby: #a8875a;
+  --kafel-a: #ffffff; --kafel-b: #eee8dc; --kafel-napis: #33302a;
+  --kafel-gra-a: #1f5d4c; --kafel-gra-b: #17493c;
+  --akcent: #1f5d4c; --akcent-napis: #ffffff;
+  --dioda: #c4402f;
+  --panel-tlo: #fbf8f2; --pole-tlo: #ffffff;
+  --guzik-a: #ffffff; --guzik-b: #e2dacb; --guzik-cien: #bbb1a0; --guzik-napis: #33302a;
+}
+[data-paleta="papier"] .kafel.gra .nazwa-kafla,
+[data-paleta="papier"] .kafel.gra .cyfra { color: #fff; }
+
+/* ============================= BAZA =============================== */
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  color: var(--napis);
+  background: radial-gradient(ellipse at 50% 0%, var(--tlo-1) 0%, var(--tlo-2) 68%);
+  transition: background .3s ease;
+  overflow: hidden;
+}
+
+.obudowa { width: 100%; max-width: 1000px; }
+
+/* tryb skalowany — całość powiększana do wolnego miejsca na panelu */
+.obudowa.skalowana {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform-origin: center center;
+  max-width: none;
+  margin: 0;
+}
+.ukryty { display: none !important; }
+
+/* --- listwa gorna --- */
+
+.listwa {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.marka { font-size: 11px; font-weight: 800; letter-spacing: .3em; white-space: nowrap; }
+.wybory { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.skorki { display: flex; gap: 3px; }
+.palety { display: flex; gap: 4px; }
+
+.probka {
+  background: transparent; border: 1px solid var(--panel-linia);
+  color: var(--napis-slaby); font: inherit; font-size: 9px;
+  letter-spacing: .1em; text-transform: uppercase;
+  padding: 4px 7px; border-radius: 4px; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.probka:hover { color: var(--napis); }
+.probka.wybrana { background: var(--akcent); color: var(--akcent-napis); border-color: var(--akcent); }
+
+.kropka {
+  width: 16px; height: 16px; padding: 0; border-radius: 50%;
+  border: 1.5px solid rgba(128,128,128,.4); cursor: pointer;
+  transition: transform .12s ease;
+}
+.kropka:hover { transform: scale(1.18); }
+.kropka.wybrana { border-color: var(--ekran); box-shadow: 0 0 0 2px rgba(128,128,128,.3); }
+
+/* --- plansza: dwie kolumny --- */
+
+.plansza {
+  display: grid;
+  /* minmax(0, …) pozwala kolumnie zwęzić się poniżej szerokości treści.
+     Bez tego rząd przycisków rozpychał prawą kolumnę poza ekran. */
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.lewa { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.prawa { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.plansza > * { min-width: 0; }
+
+/* --- zegar --- */
+
+.zegar-blok { line-height: 1; }
+.zegar {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 68px; font-weight: 600; line-height: .95;
+  color: var(--ekran); text-shadow: 0 0 18px currentColor;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+}
+.data { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--napis-slaby); margin-top: 6px; }
+
+/* --- wyswietlacz --- */
+
+.wyswietlacz { background: var(--ekran-tlo); border-radius: 8px; padding: 11px 13px; min-width: 0; overflow: hidden; }
+.wyswietlacz-glowny { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+.numer {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 32px; font-weight: 700; line-height: 1;
+  color: var(--ekran); text-shadow: 0 0 16px currentColor;
+  min-width: 40px; text-align: center; padding-right: 12px;
+  border-right: 1px solid color-mix(in srgb, var(--ekran) 18%, transparent);
+}
+.numer.slaby { color: var(--ekran-slaby); text-shadow: none; }
+
+.teksty { flex: 1; min-width: 0; }
+.nazwa {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 14px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ekran); text-shadow: 0 0 12px currentColor;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.nazwa.slaby { color: var(--ekran-slaby); text-shadow: none; }
+.nazwa.blad  { color: var(--dioda); text-shadow: 0 0 12px currentColor; }
+
+.pasek-utworu { margin-top: 4px; height: 15px; overflow: hidden; }
+.utwor { font-size: 11.5px; color: var(--ekran-slaby); white-space: nowrap; }
+.utwor.przewijaj { display: inline-block; padding-left: 100%; animation: przewijanie 20s linear infinite; }
+@keyframes przewijanie { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+
+.wskazniki {
+  display: flex; align-items: center; gap: 7px;
+  margin-top: 9px; padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--ekran) 12%, transparent);
+}
+.dioda { width: 7px; height: 7px; border-radius: 50%; background: color-mix(in srgb, var(--dioda) 25%, transparent); }
+.dioda.swieci { background: var(--dioda); box-shadow: 0 0 9px var(--dioda); animation: puls 1.8s ease-in-out infinite; }
+@keyframes puls { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+.etykieta-diody { font-size: 8.5px; letter-spacing: .2em; color: var(--ekran-slaby); }
+.slupki { margin-left: auto; display: flex; align-items: flex-end; gap: 3px; height: 12px; opacity: 0; transition: opacity .2s; }
+.slupki.aktywne { opacity: 1; }
+.slupki i { width: 3px; height: 3px; background: var(--ekran); border-radius: 1px; }
+.slupki.aktywne i { animation: skok .9s ease-in-out infinite; }
+.slupki i:nth-child(1) { animation-delay: -.70s; }
+.slupki i:nth-child(2) { animation-delay: -.25s; }
+.slupki i:nth-child(3) { animation-delay: -.95s; }
+.slupki i:nth-child(4) { animation-delay: -.45s; }
+.slupki i:nth-child(5) { animation-delay: -.10s; }
+@keyframes skok { 0%,100% { height: 3px; } 50% { height: 12px; } }
+
+/* --- sterowanie --- */
+
+.sterowanie { display: flex; align-items: center; gap: 9px; }
+.okragly {
+  width: 44px; height: 44px; flex-shrink: 0; border: none; border-radius: 50%;
+  cursor: pointer; color: var(--guzik-napis);
+  background: linear-gradient(180deg, var(--guzik-a) 0%, var(--guzik-b) 100%);
+  box-shadow: 0 3px 0 var(--guzik-cien), inset 0 1px 0 rgba(255,255,255,.3);
+  display: flex; align-items: center; justify-content: center;
+}
+.okragly.duzy { width: 54px; height: 54px; }
+.okragly:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--guzik-cien); }
+.okragly:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+.okragly svg { width: 20px; height: 20px; fill: currentColor; }
+.okragly.duzy svg { width: 25px; height: 25px; }
+.okragly.wyciszony { background: linear-gradient(180deg, var(--dioda) 0%, color-mix(in srgb, var(--dioda) 70%, #000) 100%); color: #fff; }
+
+.glosnosc { display: flex; align-items: center; }
+input[type=range] { width: 100%; accent-color: var(--akcent); height: 4px; }
+
+/* --- listy --- */
+
+.listy {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; flex-wrap: wrap; min-width: 0;
+}
+.zakladki { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; min-width: 0; }
+.zakladka {
+  border: 1px solid transparent; background: transparent; color: var(--napis-slaby);
+  font: inherit; font-size: 11px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase;
+  padding: 5px 10px; border-radius: 5px; cursor: pointer;
+}
+.zakladka:hover { color: var(--napis); }
+.zakladka.wybrana { color: var(--akcent-napis); background: var(--akcent); border-color: var(--akcent); }
+.zakladka-plus { font-size: 14px; padding: 3px 8px; line-height: 1; }
+
+.narzedzia-list {
+  display: flex; gap: 3px;
+  flex-wrap: wrap;      /* dziewięć przycisków ma prawo zejść do drugiej linii */
+  min-width: 0;
+}
+.ikonka {
+  background: color-mix(in srgb, var(--napis) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--napis-slaby) 55%, transparent);
+  cursor: pointer; font: inherit;
+  font-size: 9px; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--napis); padding: 6px 7px; border-radius: 5px;
+  white-space: nowrap;
+}
+.ikonka:hover { background: color-mix(in srgb, var(--akcent) 28%, transparent); }
+.ikonka.pracuje { opacity: .5; pointer-events: none; }
+
+/* --- kafelki --- */
+
+.kafelki { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+
+.kafel {
+  position: relative; min-height: 56px; padding: 8px 6px;
+  border: none; border-radius: 7px; cursor: pointer; font: inherit;
+  color: var(--kafel-napis);
+  background: linear-gradient(180deg, var(--kafel-a) 0%, var(--kafel-b) 100%);
+  box-shadow: 0 2px 0 var(--guzik-cien), inset 0 1px 0 rgba(255,255,255,.10);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  transition: transform .07s ease, box-shadow .07s ease, opacity .12s;
+  touch-action: manipulation;
+  user-select: none; -webkit-user-select: none;
+}
+.kafel:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+.cyfra {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 13px; font-weight: 700; line-height: 1; color: var(--ekran-slaby);
+}
+.nazwa-kafla {
+  font-size: 9px; line-height: 1.2; text-align: center;
+  word-break: break-word; max-width: 100%;
+  min-width: 0;   /* bez tego długa nazwa rozpycha kolumnę poza kontener */
+}
+.kafel { min-width: 0; }
+.kafelki { min-width: 0; }
+.kafel.gra {
+  background: linear-gradient(180deg, var(--kafel-gra-a) 0%, var(--kafel-gra-b) 100%);
+  box-shadow: 0 2px 0 var(--guzik-cien), inset 0 1px 0 rgba(255,255,255,.12),
+              0 0 0 1px color-mix(in srgb, var(--ekran) 45%, transparent);
+}
+.kafel.gra .cyfra { color: var(--ekran); text-shadow: 0 0 10px currentColor; }
+.kafel.pusty {
+  background: transparent; box-shadow: none; font-size: 16px;
+  border: 1.5px dashed color-mix(in srgb, var(--napis-slaby) 45%, transparent);
+  color: var(--napis-slaby);
+}
+.kafel.pusty:hover { border-color: var(--akcent); color: var(--akcent); }
+
+/* przenoszenie kafelkow */
+.kafel.przenoszony {
+  opacity: .92; z-index: 50; cursor: grabbing;
+  box-shadow: 0 10px 26px -6px rgba(0,0,0,.65), 0 0 0 2px var(--ekran);
+  transition: none;
+}
+.kafel.cel-przenoszenia { box-shadow: inset 0 0 0 2px var(--ekran); }
+body.przenoszenie { cursor: grabbing; }
+body.przenoszenie .kafel { touch-action: none; }
+
+.stan-stacji { position: absolute; top: 5px; left: 5px; width: 6px; height: 6px; border-radius: 50%; }
+.stan-stacji.dziala { background: #3ddc84; box-shadow: 0 0 6px #3ddc84; }
+.stan-stacji.padla  { background: #ff4b3e; box-shadow: 0 0 6px #ff4b3e; }
+.stan-stacji.testowana { background: var(--ekran-slaby); animation: puls 1s infinite; }
+
+.olowek {
+  position: absolute; top: 3px; right: 3px; width: 18px; height: 18px;
+  border: none; border-radius: 4px; background: transparent;
+  color: color-mix(in srgb, var(--kafel-napis) 45%, transparent);
+  cursor: pointer; opacity: 0; display: flex; align-items: center; justify-content: center;
+  transition: opacity .15s;
+}
+.kafel:hover .olowek, .kafel:focus-within .olowek { opacity: 1; }
+.olowek:hover { background: rgba(128,128,128,.25); }
+.olowek svg { width: 11px; height: 11px; fill: currentColor; }
+
+/* --- panel wyglądu: skórki i kolory --- */
+
+#panelWyglad .skorki {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+}
+#panelWyglad .probka {
+  padding: 11px 6px; font-size: 10.5px; border-radius: 6px;
+}
+#panelWyglad .palety { display: flex; gap: 10px; }
+#panelWyglad .kropka { width: 30px; height: 30px; }
+
+@media (max-width: 520px) {
+  #panelWyglad .skorki { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* --- panele jako nakladka --- */
+
+.zaslona { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 90; }
+
+.panel {
+  position: fixed; z-index: 100;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(600px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px); overflow-y: auto;
+  background: var(--panel-tlo); border: 1px solid var(--panel-linia);
+  border-radius: 10px; padding: 15px;
+  box-shadow: 0 24px 60px -12px rgba(0,0,0,.7);
+}
+.panel-gora { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.kategorie { display: flex; gap: 4px; }
+.kategoria {
+  background: transparent; border: 1px solid var(--panel-linia); color: var(--napis-slaby);
+  font: inherit; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase;
+  padding: 5px 10px; border-radius: 5px; cursor: pointer;
+}
+.kategoria.wybrana { background: var(--akcent); color: var(--akcent-napis); border-color: var(--akcent); }
+#szukaj {
+  flex: 1; min-width: 110px; background: var(--pole-tlo);
+  border: 1px solid var(--panel-linia); border-radius: 5px;
+  padding: 6px 9px; font: inherit; font-size: 12.5px; color: var(--napis);
+}
+.lista-katalogu { max-height: min(420px, 52vh); overflow-y: auto; }
+.wiersz {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; padding: 6px 8px; border: none; border-radius: 5px;
+  background: transparent; cursor: pointer; font: inherit; font-size: 12.5px;
+  color: var(--napis); text-align: left;
+}
+.wiersz:hover { background: rgba(128,128,128,.15); }
+.wiersz .znak { font-weight: 700; color: var(--napis-slaby); flex-shrink: 0; }
+.wiersz.dodana { color: var(--akcent); font-weight: 600; }
+.wiersz.dodana .znak { color: var(--akcent); }
+
+.panel-tytul { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--napis-slaby); margin-bottom: 10px; }
+.panel label { display: block; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--napis-slaby); margin-bottom: 4px; }
+.panel input[type=text] {
+  width: 100%; padding: 9px 11px; margin-bottom: 11px;
+  border: 1px solid var(--panel-linia); border-radius: 6px;
+  background: var(--pole-tlo); font: inherit; font-size: 13px; color: var(--napis);
+}
+.blad { font-size: 12px; color: var(--dioda); margin: -5px 0 10px; }
+.panel-dol { display: flex; align-items: center; gap: 8px; justify-content: flex-end; margin-top: 11px; }
+.licznik { margin-right: auto; font-size: 11px; color: var(--napis-slaby); }
+.btn-glowny { background: var(--akcent); color: var(--akcent-napis); border: none; border-radius: 6px; padding: 8px 15px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.btn-drugi { background: transparent; border: none; color: var(--napis-slaby); padding: 8px 10px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.btn-usun { background: transparent; border: none; color: var(--dioda); padding: 8px 10px; font: inherit; font-size: 12.5px; cursor: pointer; margin-right: auto; }
+
+.stopka { margin-top: 9px; font-size: 9.5px; color: var(--napis-slaby); text-align: center; min-height: 12px; }
+
+button:focus-visible, input:focus-visible { outline: 2px solid var(--ekran); outline-offset: 2px; }
+
+/* ekrany waskie albo wysokie - kolumny jedna pod druga */
+@media (max-width: 800px) {
+  body { overflow: auto; align-items: flex-start; }
+  .plansza { grid-template-columns: 1fr; }
+  .lewa { flex-direction: column; }
+  .zegar { font-size: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slupki.aktywne i, .dioda.swieci, .utwor.przewijaj, .stan-stacji.testowana { animation: none; }
+  .slupki.aktywne i { height: 8px; }
+}
+
+/* ==================================================================
+   SKORKA 1 — TUNER: srebrny panel hi-fi. Zegar na srodku kolumny,
+   duze litery, wyswietlacz bez pustych przestrzeni.
+   ================================================================== */
+
+[data-skorka="tuner"] .obudowa {
+  border-radius: 14px; padding: 14px; border: 1px solid var(--obudowa-ramka);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18)),
+    repeating-linear-gradient(180deg, var(--obudowa-a) 0px, var(--obudowa-a) 2px, var(--obudowa-b) 2px, var(--obudowa-b) 3px);
+  box-shadow: 0 22px 56px -20px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.08);
+}
+[data-skorka="tuner"] .zegar-blok { text-align: center; }
+[data-skorka="tuner"] .zegar { font-size: 92px; letter-spacing: -.02em; }
+[data-skorka="tuner"] .data { font-size: 12px; letter-spacing: .18em; margin-top: 8px; }
+
+[data-skorka="tuner"] .wyswietlacz {
+  box-shadow: inset 0 3px 12px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.3);
+  padding: 14px 16px;
+}
+[data-skorka="tuner"] .numer { font-size: 44px; min-width: 56px; }
+[data-skorka="tuner"] .nazwa { font-size: 19px; letter-spacing: .06em; }
+[data-skorka="tuner"] .utwor { font-size: 14px; }
+[data-skorka="tuner"] .pasek-utworu { height: 20px; margin-top: 7px; }
+
+[data-skorka="tuner"] .kafel { min-height: 62px; }
+[data-skorka="tuner"] .cyfra { font-size: 16px; }
+[data-skorka="tuner"] .nazwa-kafla { font-size: 11.5px; }
+[data-skorka="tuner"] .okragly { width: 50px; height: 50px; }
+[data-skorka="tuner"] .okragly.duzy { width: 60px; height: 60px; }
+
+/* ==================================================================
+   SKORKA 2 — KOKPIT: wielkie belki stacji 2 w rzedzie, kwadratowe
+   przyciski pod palec, maksymalny zegar
+   ================================================================== */
+
+[data-skorka="kokpit"] .obudowa { padding: 0; }
+[data-skorka="kokpit"] .plansza { grid-template-columns: 380px 1fr; gap: 16px; }
+[data-skorka="kokpit"] .zegar { font-size: 88px; font-weight: 500; }
+[data-skorka="kokpit"] .data { font-size: 11px; }
+[data-skorka="kokpit"] .lewa { justify-content: flex-start; }
+[data-skorka="kokpit"] .wyswietlacz {
+  border-radius: 14px; padding: 22px 20px 20px;
+  border: 1px solid var(--panel-linia);
+  min-height: 190px;                       /* było ciasno, a miejsce jest */
+  display: flex; flex-direction: column; justify-content: center;
+}
+[data-skorka="kokpit"] .numer { font-size: 52px; min-width: 66px; padding-right: 18px; }
+[data-skorka="kokpit"] .nazwa { font-size: 21px; letter-spacing: .04em; }
+[data-skorka="kokpit"] .utwor { font-size: 15px; }
+[data-skorka="kokpit"] .pasek-utworu { height: 22px; margin-top: 8px; }
+[data-skorka="kokpit"] .wskazniki { margin-top: 16px; padding-top: 12px; }
+/* sterowanie odsunięte w dół — bliżej ręki, dalej od tytułu */
+[data-skorka="kokpit"] .sterowanie { margin-top: 14px; }
+[data-skorka="kokpit"] .glosnosc { margin-top: 6px; }
+
+[data-skorka="kokpit"] .kafelki { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+[data-skorka="kokpit"] .kafel {
+  flex-direction: row; justify-content: flex-start; gap: 11px;
+  min-height: 52px; padding: 8px 12px; border-radius: 9px;
+  border: 1px solid var(--panel-linia);
+}
+[data-skorka="kokpit"] .cyfra {
+  font-size: 15px; width: 27px; height: 27px; flex-shrink: 0;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.07);
+}
+[data-skorka="kokpit"] .kafel.gra .cyfra { background: rgba(0,0,0,.3); }
+[data-skorka="kokpit"] .nazwa-kafla { font-size: 13px; text-align: left; font-weight: 500; }
+[data-skorka="kokpit"] .kafel.pusty { flex-direction: row; justify-content: center; }
+[data-skorka="kokpit"] .olowek { top: 50%; transform: translateY(-50%); right: 6px; }
+[data-skorka="kokpit"] .stan-stacji { top: 7px; left: 7px; }
+[data-skorka="kokpit"] .okragly { width: 54px; height: 54px; border-radius: 12px; }
+[data-skorka="kokpit"] .okragly.duzy { width: 66px; height: 66px; border-radius: 15px; }
+[data-skorka="kokpit"] .okragly svg { width: 24px; height: 24px; }
+[data-skorka="kokpit"] .okragly.duzy svg { width: 30px; height: 30px; }
+[data-skorka="kokpit"] input[type=range] { height: 8px; }
+
+/* ==================================================================
+   SKORKA 3 — KASETA: magnetofon lat 80. Zegar jak licznik tasmy,
+   grube fazowane klawisze, wszystko z ciezka reka.
+   ================================================================== */
+
+[data-skorka="kaseta"] .obudowa {
+  border-radius: 5px; padding: 15px; border: 3px solid var(--obudowa-ramka);
+  background: linear-gradient(175deg, var(--obudowa-a) 0%, var(--obudowa-b) 100%);
+  box-shadow: 0 22px 54px -16px rgba(0,0,0,.75), inset 0 2px 0 rgba(255,255,255,.45), inset 0 -3px 0 rgba(0,0,0,.12);
+}
+
+/* zegar w zatopionym okienku, jak licznik taśmy */
+[data-skorka="kaseta"] .zegar-blok {
+  background: var(--ekran-tlo);
+  border: 2px solid var(--obudowa-ramka);
+  border-radius: 4px;
+  padding: 10px 16px 12px;
+  text-align: center;
+  box-shadow: inset 0 4px 12px rgba(0,0,0,.8);
+}
+[data-skorka="kaseta"] .zegar { font-size: 84px; font-weight: 700; color: var(--ekran); }
+[data-skorka="kaseta"] .data { font-size: 11px; letter-spacing: .2em; }
+
+[data-skorka="kaseta"] .wyswietlacz {
+  border-radius: 3px; border: 2px solid var(--obudowa-ramka);
+  box-shadow: inset 0 4px 12px rgba(0,0,0,.8);
+  padding: 13px 15px;
+}
+[data-skorka="kaseta"] .numer { font-size: 40px; min-width: 52px; }
+[data-skorka="kaseta"] .nazwa { font-size: 17px; }
+[data-skorka="kaseta"] .utwor { font-size: 13px; }
+
+[data-skorka="kaseta"] .kafel {
+  border-radius: 3px; min-height: 62px;
+  border-top: 1px solid rgba(255,255,255,.55);
+  box-shadow: 0 4px 0 var(--guzik-cien), 0 5px 8px rgba(0,0,0,.3);
+}
+[data-skorka="kaseta"] .kafel:active { transform: translateY(4px); box-shadow: 0 0 0 var(--guzik-cien); }
+[data-skorka="kaseta"] .cyfra { font-size: 11px; letter-spacing: .1em; border: 1px solid currentColor; border-radius: 2px; padding: 1px 5px; }
+[data-skorka="kaseta"] .nazwa-kafla { font-size: 11px; font-weight: 700; text-transform: uppercase; }
+[data-skorka="kaseta"] .zakladka, [data-skorka="kaseta"] .probka, [data-skorka="kaseta"] .ikonka { border-radius: 3px; }
+/* klawisze magnetofonu: prostokatne, z glebokim skokiem */
+[data-skorka="kaseta"] .okragly {
+  width: 54px; height: 46px; border-radius: 4px;
+  box-shadow: 0 5px 0 var(--guzik-cien), 0 6px 9px rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.5);
+}
+[data-skorka="kaseta"] .okragly.duzy { width: 64px; height: 46px; }
+[data-skorka="kaseta"] .okragly:active { transform: translateY(5px); box-shadow: 0 0 0 var(--guzik-cien); }
+
+/* ==================================================================
+   SKORKA 5 — KAFLE: przeciwienstwo pozostalych. Zero obudowy, zero
+   cieni, ogromny cienki zegar i plaskie kafle z duzym napisem.
+   ================================================================== */
+
+[data-skorka="kafle"] .obudowa { padding: 0; }
+[data-skorka="kafle"] .plansza { gap: 22px; }
+[data-skorka="kafle"] .zegar {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 110px; font-weight: 100; letter-spacing: -.05em; text-shadow: none;
+  color: var(--napis); line-height: .9;
+}
+[data-skorka="kafle"] .data { font-size: 12px; letter-spacing: .22em; margin-top: 12px; }
+[data-skorka="kafle"] .wyswietlacz {
+  background: transparent; padding: 16px 0 0; border-top: 1px solid var(--panel-linia);
+}
+[data-skorka="kafle"] .numer { display: none; }
+[data-skorka="kafle"] .nazwa {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 21px; font-weight: 600; letter-spacing: 0; text-transform: none;
+  text-shadow: none; color: var(--napis);
+}
+[data-skorka="kafle"] .utwor { font-size: 14px; color: var(--napis-slaby); }
+[data-skorka="kafle"] .pasek-utworu { height: 20px; margin-top: 7px; }
+[data-skorka="kafle"] .wskazniki { border-top: none; padding-top: 6px; }
+[data-skorka="kafle"] .etykieta-diody { color: var(--napis-slaby); }
+
+[data-skorka="kafle"] .kafelki { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+[data-skorka="kafle"] .kafel {
+  min-height: 78px; border-radius: 16px; padding: 14px;
+  align-items: flex-start; justify-content: space-between;
+  border: 1px solid var(--panel-linia); box-shadow: none;
+  background: transparent;
+}
+[data-skorka="kafle"] .kafel:active { transform: scale(.97); box-shadow: none; }
+[data-skorka="kafle"] .cyfra { font-family: inherit; font-size: 11px; font-weight: 600; color: var(--napis-slaby); }
+[data-skorka="kafle"] .nazwa-kafla { font-size: 15px; font-weight: 600; text-align: left; }
+[data-skorka="kafle"] .kafel.gra { border-color: var(--akcent); background: var(--akcent); box-shadow: none; }
+[data-skorka="kafle"] .kafel.gra .cyfra, [data-skorka="kafle"] .kafel.gra .nazwa-kafla { color: var(--akcent-napis); text-shadow: none; }
+[data-skorka="kafle"] .kafel.pusty { border-style: dashed; align-items: center; justify-content: center; }
+[data-skorka="kafle"] .okragly { border: 1px solid var(--panel-linia); box-shadow: none; background: transparent; color: var(--napis); width: 50px; height: 50px; }
+[data-skorka="kafle"] .okragly.duzy { width: 62px; height: 62px; }
+[data-skorka="kafle"] .okragly:active { transform: scale(.94); box-shadow: none; }
+[data-skorka="kafle"] .zakladka { border-radius: 20px; }
+[data-skorka="kafle"] .ikonka { border-radius: 20px; }
+
+/* ==================================================================
+   SKORKA 6 — AUTO
+   Odwzorowanie ukladu z panelu samochodowego: pasek z listami
+   i zegarem u gory, skala strojenia, duza nazwa stacji na srodku
+   ze strzalkami po bokach, kafelki 4x3 na dole.
+   ================================================================== */
+
+[data-skorka="auto"] .obudowa {
+  padding: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ekran) 22%, transparent);
+  background:
+    radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--ekran) 14%, transparent) 0%, transparent 62%),
+    linear-gradient(180deg, #14100e 0%, #0a0807 100%);
+  box-shadow: 0 20px 50px -18px rgba(0,0,0,.85);
+}
+/* listwa z przelacznikami - widoczna w kazdej skorce, tu wtopiona w panel */
+[data-skorka="auto"] .listwa {
+  margin: 0; padding: 9px 14px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ekran) 15%, transparent);
+}
+[data-skorka="auto"] .marka { color: color-mix(in srgb, var(--ekran) 70%, transparent); font-size: 10px; }
+[data-skorka="auto"] .probka {
+  border-color: color-mix(in srgb, var(--ekran) 35%, transparent);
+  color: color-mix(in srgb, var(--ekran) 70%, transparent);
+}
+[data-skorka="auto"] .probka.wybrana {
+  background: var(--ekran); color: #12100e; border-color: var(--ekran);
+}
+[data-skorka="auto"] .kropka.wybrana { border-color: var(--ekran); }
+
+/* rozbicie kolumn - ukladamy elementy w jednej siatce jak na panelu */
+[data-skorka="auto"] .lewa,
+[data-skorka="auto"] .prawa { display: contents; }
+
+[data-skorka="auto"] .plansza {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "listy    zegar"
+    "ekran    ekran"
+    "sterowanie sterowanie"
+    "kafelki  kafelki"
+    "glosnosc glosnosc";
+  gap: 0;
+  padding: 8px 14px 10px;
+}
+
+[data-skorka="auto"] .listy {
+  grid-area: listy; align-self: center;
+  padding: 6px 0 8px;
+}
+[data-skorka="auto"] .zakladka {
+  border: 1px solid color-mix(in srgb, var(--ekran) 45%, transparent);
+  border-radius: 4px; padding: 3px 12px;
+  color: color-mix(in srgb, var(--ekran) 75%, transparent);
+  font-size: 11px; letter-spacing: .04em; text-transform: none;
+}
+[data-skorka="auto"] .zakladka.wybrana {
+  background: var(--ekran); color: #12100e; border-color: var(--ekran);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ekran) 45%, transparent);
+}
+[data-skorka="auto"] .narzedzia-list { order: 3; }
+[data-skorka="auto"] .ikonka { color: color-mix(in srgb, var(--ekran) 55%, transparent); }
+
+[data-skorka="auto"] .zegar-blok { grid-area: zegar; align-self: center; text-align: right; padding-bottom: 8px; }
+[data-skorka="auto"] .zegar { font-size: 46px; font-weight: 600; text-shadow: 0 0 14px currentColor; }
+[data-skorka="auto"] .data { font-size: 10px; margin-top: 3px; color: color-mix(in srgb, var(--ekran) 50%, transparent); }
+
+/* wyswietlacz ze skala strojenia */
+[data-skorka="auto"] .wyswietlacz {
+  grid-area: ekran; position: relative;
+  background: linear-gradient(180deg, #1c1310 0%, #0e0a09 100%);
+  border-radius: 7px; padding: 10px 16px 12px;
+  border: 1px solid color-mix(in srgb, var(--ekran) 18%, transparent);
+  overflow: hidden;
+}
+/* podswietlone smugi w tle, jak na panelu */
+[data-skorka="auto"] .wyswietlacz::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 60%, color-mix(in srgb, var(--dioda) 18%, transparent) 0%, transparent 60%);
+}
+/* skala strojenia usunięta — zajmowała pionowe miejsce, którego brakuje
+   na panelu samochodowym; wyświetlacz zaczyna się od razu nazwą stacji */
+
+[data-skorka="auto"] .wyswietlacz-glowny {
+  position: relative; z-index: 1;
+  flex-direction: column; align-items: center; gap: 3px;
+  padding: 2px 0 4px;
+}
+[data-skorka="auto"] .numer {
+  border: none; padding: 0; min-width: 0;
+  font-size: 13px; letter-spacing: .3em; opacity: .55;
+}
+[data-skorka="auto"] .teksty { text-align: center; width: 100%; }
+[data-skorka="auto"] .nazwa {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 26px; font-weight: 700; letter-spacing: .01em; text-transform: none;
+  text-shadow: 0 0 18px currentColor;
+}
+[data-skorka="auto"] .pasek-utworu { height: 22px; margin-top: 8px; }
+[data-skorka="auto"] .utwor {
+  font-size: 15px; color: color-mix(in srgb, var(--dioda) 85%, #fff);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--dioda) 40%, transparent);
+}
+[data-skorka="auto"] .wskazniki {
+  position: relative; z-index: 1; justify-content: center;
+  border-top: none; margin-top: 2px; padding-top: 0;
+}
+[data-skorka="auto"] .slupki { margin-left: 8px; }
+
+/* strzalki po bokach wyswietlacza + duzy play na srodku */
+[data-skorka="auto"] .sterowanie {
+  grid-area: sterowanie; justify-content: center; gap: 14px;
+  margin-top: 8px; padding: 0 4px 8px; position: relative; z-index: 2;
+}
+/* przyciski trzymamy razem na środku — łatwiej w nie trafić w jadącym aucie
+   niż w rozrzucone po krawędziach */
+[data-skorka="auto"] .okragly {
+  width: 44px; height: 44px; border-radius: 8px;
+  background: color-mix(in srgb, var(--ekran) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ekran) 35%, transparent);
+  color: var(--ekran); box-shadow: none;
+}
+[data-skorka="auto"] .okragly.duzy { width: 52px; height: 52px; }
+[data-skorka="auto"] .okragly:active { transform: scale(.94); box-shadow: none; }
+[data-skorka="auto"] .okragly.wyciszony { background: var(--dioda); color: #14100e; border-color: var(--dioda); }
+
+/* kafelki w ramkach, jak presety na panelu */
+[data-skorka="auto"] .kafelki { grid-area: kafelki; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+[data-skorka="auto"] .kafel {
+  min-height: 34px; padding: 6px 4px; border-radius: 4px;
+  background: color-mix(in srgb, var(--ekran) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ekran) 40%, transparent);
+  box-shadow: none; color: color-mix(in srgb, var(--ekran) 88%, #fff);
+  flex-direction: row; gap: 6px;
+}
+[data-skorka="auto"] .kafel:active { transform: scale(.97); box-shadow: none; }
+[data-skorka="auto"] .kafel.gra {
+  background: color-mix(in srgb, var(--ekran) 22%, transparent);
+  border-color: var(--ekran);
+  box-shadow: 0 0 14px -2px color-mix(in srgb, var(--ekran) 55%, transparent);
+}
+[data-skorka="auto"] .cyfra { font-size: 9px; opacity: .5; }
+[data-skorka="auto"] .nazwa-kafla {
+  font-size: 11px; font-weight: 500; text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+[data-skorka="auto"] .kafel.pusty {
+  background: transparent; color: color-mix(in srgb, var(--ekran) 35%, transparent);
+  border-style: dashed; justify-content: center; font-size: 13px;
+}
+[data-skorka="auto"] .olowek { color: color-mix(in srgb, var(--ekran) 55%, transparent); top: 50%; transform: translateY(-50%); }
+[data-skorka="auto"] .stan-stacji { top: 4px; left: 4px; }
+
+[data-skorka="auto"] .glosnosc { grid-area: glosnosc; padding-top: 6px; }
+[data-skorka="auto"] input[type=range] { accent-color: var(--ekran); height: 5px; }
+[data-skorka="auto"] .stopka { display: none; }
+
+/* ==================================================================
+   TRYB USTAWIANIA KOLEJNOSCI
+   Wlaczany przyciskiem "Kolejnosc". Kafelki dostaja strzalki po bokach,
+   klikniecie nie wlacza juz stacji, a przeciaganie chwyta od razu.
+   ================================================================== */
+
+.ikonka.wlaczona {
+  background: var(--akcent); color: var(--akcent-napis);
+}
+
+body.tryb-edycji .kafel { cursor: grab; }
+body.tryb-edycji .kafel:not(.pusty) {
+  box-shadow: 0 2px 0 var(--guzik-cien), inset 0 1px 0 rgba(255,255,255,.10),
+              0 0 0 1px color-mix(in srgb, var(--ekran) 35%, transparent);
+}
+body.tryb-edycji .kafel .nazwa-kafla,
+body.tryb-edycji .kafel .cyfra { pointer-events: none; }
+body.tryb-edycji .olowek { opacity: 1; }
+
+.przesun {
+  position: absolute; top: 0; bottom: 0; width: 24px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; line-height: 1; cursor: pointer;
+  color: var(--kafel-napis);
+  background: color-mix(in srgb, var(--ekran) 16%, transparent);
+  opacity: .85; transition: opacity .12s, background .12s;
+  user-select: none; -webkit-user-select: none;
+}
+.przesun:hover { opacity: 1; background: color-mix(in srgb, var(--ekran) 34%, transparent); }
+.przesun.lewo  { left: 0;  border-radius: 6px 0 0 6px; }
+.przesun.prawo { right: 0; border-radius: 0 6px 6px 0; }
+.przesun.nieczynna { opacity: .16; cursor: default; background: transparent; }
+
+/* w skorce z lista wierszy strzalki sa waskie i bez zaokraglen */
+[data-skorka="kafle"] .przesun.lewo  { border-radius: 13px 0 0 13px; }
+[data-skorka="kafle"] .przesun.prawo { border-radius: 0 13px 13px 0; }
+[data-skorka="auto"] .przesun { width: 20px; border-radius: 3px; }
+
+/* --- wlasne stacje dopisane do katalogu --- */
+
+#blokKatalogu { margin-bottom: 11px; }
+#poleKategoria {
+  width: 100%; padding: 8px 10px;
+  border: 1px solid var(--panel-linia); border-radius: 6px;
+  background: var(--pole-tlo); color: var(--napis);
+  font: inherit; font-size: 13px; cursor: pointer;
+}
+#poleKategoria:focus-visible { outline: 2px solid var(--ekran); outline-offset: 1px; }
+
+/* --- wybor wyjscia audio (tylko Mac) --- */
+#wyjscieAudio {
+  width: 100%; padding: 8px 10px; margin-top: -4px;
+  border: 1px solid var(--panel-linia); border-radius: 6px;
+  background: var(--pole-tlo); color: var(--napis);
+  font: inherit; font-size: 13px; cursor: pointer;
+}
+#wyjscieAudio:focus-visible { outline: 2px solid var(--ekran); outline-offset: 1px; }
+
+.znacznik-wlasna {
+  margin-left: 7px; padding: 1px 5px; border-radius: 3px;
+  font-size: 9px; letter-spacing: .08em; text-transform: uppercase;
+  background: color-mix(in srgb, var(--akcent) 22%, transparent);
+  color: var(--akcent);
+}
+
+.usun-z-katalogu {
+  flex-shrink: 0; width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px; cursor: pointer;
+  font-size: 15px; line-height: 1;
+  color: var(--napis-slaby);
+}
+.usun-z-katalogu:hover { background: color-mix(in srgb, var(--dioda) 22%, transparent); color: var(--dioda); }
+
+/* --- katalog: wyszukiwarka sieciowa i tryb edycji --- */
+
+.kategoria-sieciowa {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--akcent) 60%, transparent);
+}
+.kategoria-sieciowa.wybrana { border-style: solid; }
+
+.pasek-info {
+  font-size: 11.5px; line-height: 1.35;
+  color: var(--napis-slaby);
+  padding: 7px 9px; margin-bottom: 8px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--akcent) 10%, transparent);
+}
+.pasek-info.blad-info {
+  color: var(--dioda);
+  background: color-mix(in srgb, var(--dioda) 12%, transparent);
+}
+
+.tekst-wiersza {
+  display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+  min-width: 0; flex: 1;
+}
+
+.opis-stacji {
+  width: 100%; margin-top: 1px;
+  font-size: 10px; color: var(--napis-slaby);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.olowek-wiersza {
+  flex-shrink: 0; width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px; cursor: pointer; font-size: 12px;
+  color: var(--napis-slaby);
+}
+.olowek-wiersza:hover { background: color-mix(in srgb, var(--akcent) 22%, transparent); color: var(--akcent); }
+
+.wiersz.przywroc {
+  justify-content: center;
+  margin-top: 6px;
+  font-size: 11.5px; color: var(--akcent);
+  border: 1px dashed color-mix(in srgb, var(--akcent) 45%, transparent);
+}
+
+.pusto {
+  padding: 18px 8px; text-align: center;
+  font-size: 12px; color: var(--napis-slaby);
+}
+
+#btnEdytujKatalog.wlaczona { color: var(--akcent); font-weight: 600; }
+
+#btnZakresSieci { flex-shrink: 0; }
+
+/* stacje nadające po zwykłym http — niedostępne w wersji przenośnej */
+.kafel.niedostepna { opacity: .42; }
+.kafel.niedostepna::after {
+  content: "http"; position: absolute; bottom: 2px; right: 4px;
+  font-size: 7px; letter-spacing: .05em; opacity: .8;
+}
+.wiersz.niedostepna { opacity: .45; }
+
+/* ==================================================================
+   SKORKA 7 — TELEFON
+   Pod ekran trzymany pionowo w dloni: wszystko jedno pod drugim,
+   duzy zegar, kafelki w dwoch kolumnach, przyciski pod kciuk.
+   Ta skorka nie jest skalowana - uklad plynie za szerokoscia ekranu.
+   ================================================================== */
+
+/* atrybut skórki siedzi na samym body, więc selektor musi go dotyczyć wprost;
+   przewijanie włączone, bo na telefonie treść bywa wyższa niż ekran */
+body[data-skorka="telefon"] { align-items: flex-start; overflow: auto; }
+[data-skorka="telefon"] .obudowa { max-width: 560px; padding: 4px 2px 10px; }
+
+[data-skorka="telefon"] .plansza {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+[data-skorka="telefon"] .lewa,
+[data-skorka="telefon"] .prawa { display: flex; flex-direction: column; gap: 10px; }
+
+[data-skorka="telefon"] .zegar-blok { text-align: center; padding-top: 4px; }
+[data-skorka="telefon"] .zegar {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 76px; font-weight: 300; letter-spacing: -.03em;
+  text-shadow: none; color: var(--napis);
+}
+[data-skorka="telefon"] .data { font-size: 12px; letter-spacing: .14em; margin-top: 6px; }
+
+[data-skorka="telefon"] .wyswietlacz {
+  border-radius: 14px; padding: 14px 16px;
+  border: 1px solid var(--panel-linia);
+}
+[data-skorka="telefon"] .wyswietlacz-glowny { gap: 12px; }
+[data-skorka="telefon"] .numer { font-size: 34px; min-width: 42px; }
+[data-skorka="telefon"] .nazwa { font-size: 15px; }
+[data-skorka="telefon"] .utwor { font-size: 12.5px; }
+
+/* sterowanie duze, pod kciuk, na srodku */
+[data-skorka="telefon"] .sterowanie { justify-content: center; gap: 14px; }
+[data-skorka="telefon"] .okragly { width: 58px; height: 58px; }
+[data-skorka="telefon"] .okragly.duzy { width: 70px; height: 70px; }
+[data-skorka="telefon"] .okragly svg { width: 25px; height: 25px; }
+[data-skorka="telefon"] .okragly.duzy svg { width: 31px; height: 31px; }
+[data-skorka="telefon"] input[type=range] { height: 10px; }
+
+/* zakladki i narzedzia jedno pod drugim, zeby sie miescily */
+[data-skorka="telefon"] .listy { flex-direction: column; align-items: stretch; gap: 8px; }
+[data-skorka="telefon"] .zakladki { justify-content: center; }
+[data-skorka="telefon"] .zakladka { font-size: 12.5px; padding: 8px 14px; }
+[data-skorka="telefon"] .narzedzia-list { justify-content: space-between; }
+[data-skorka="telefon"] .ikonka { font-size: 10.5px; padding: 8px 6px; }
+
+/* kafelki: dwie kolumny, wysokie, z duzym napisem */
+[data-skorka="telefon"] .kafelki { grid-template-columns: repeat(2, 1fr); gap: 9px; }
+[data-skorka="telefon"] .kafel {
+  min-height: 66px; border-radius: 12px; padding: 10px 8px; gap: 5px;
+}
+[data-skorka="telefon"] .cyfra { font-size: 15px; }
+[data-skorka="telefon"] .nazwa-kafla { font-size: 12.5px; line-height: 1.25; }
+[data-skorka="telefon"] .olowek { width: 24px; height: 24px; opacity: .55; }
+[data-skorka="telefon"] .olowek svg { width: 13px; height: 13px; }
+
+[data-skorka="telefon"] .stopka { font-size: 10.5px; padding: 0 8px; }
+
+/* na ekranie poziomym telefon dostaje dwie kolumny kafelkow wiecej */
+@media (min-aspect-ratio: 13/10) {
+  [data-skorka="telefon"] .plansza { flex-direction: row; align-items: flex-start; }
+  [data-skorka="telefon"] .lewa { flex: 0 0 44%; }
+  [data-skorka="telefon"] .prawa { flex: 1; }
+  [data-skorka="telefon"] .obudowa { max-width: 100%; }
+  [data-skorka="telefon"] .zegar { font-size: 60px; }
+}
+
+/* przyciski ratunkowe — wyróżnione, żeby dało się w nie trafić bez czytania */
+.ikonka.pilne { color: var(--napis); font-weight: 600; }
+.ikonka.pilne:hover { background: color-mix(in srgb, var(--akcent) 25%, transparent); }
+#btnRestartApki { color: var(--dioda); }
+
+/* --- skórka Auto: menu w ramkach musi być czytelne na ciemnym tle --- */
+[data-skorka="auto"] .ikonka {
+  background: color-mix(in srgb, var(--ekran) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ekran) 45%, transparent);
+  color: color-mix(in srgb, var(--ekran) 92%, #fff);
+}
+[data-skorka="auto"] .ikonka:hover { background: color-mix(in srgb, var(--ekran) 30%, transparent); }
+[data-skorka="auto"] #btnRestartApki {
+  color: #ffb0a6;
+  border-color: color-mix(in srgb, var(--dioda) 60%, transparent);
+  background: color-mix(in srgb, var(--dioda) 18%, transparent);
+}
+
+/* w jasnych paletach przycisk ostrzegawczy musi mieć wyraźne tło,
+   inaczej ginie na kremowym */
+[data-paleta="papier"] #btnRestartApki,
+[data-paleta="stal"] #btnRestartApki {
+  color: #fff;
+  background: var(--dioda);
+  border-color: var(--dioda);
+}
+[data-paleta="papier"] .ikonka,
+[data-paleta="stal"] .ikonka {
+  background: rgba(255,255,255,.75);
+  border-color: var(--panel-linia);
+  color: var(--napis);
+}

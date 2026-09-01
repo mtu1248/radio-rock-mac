@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radio Rock</title>
+<meta name="theme-color" content="#0a0807">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Radio Rock">
+<link rel="apple-touch-icon" href="ikona-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="ikona-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-skorka="tuner" data-paleta="stal">
+
+<div class="obudowa">
+
+  <!-- PLANSZA: dwie kolumny -->
+  <div class="plansza">
+
+    <!-- LEWA: zegar, wyswietlacz, sterowanie -->
+    <div class="lewa">
+      <div class="zegar-blok">
+        <div class="zegar" id="zegar">--:--</div>
+        <div class="data" id="data"></div>
+      </div>
+
+      <div class="wyswietlacz">
+        <div class="wyswietlacz-glowny">
+          <div class="numer" id="numer">--</div>
+          <div class="teksty">
+            <div class="nazwa" id="nazwa">WYBIERZ STACJĘ</div>
+            <div class="pasek-utworu"><div class="utwor" id="utwor">&nbsp;</div></div>
+          </div>
+        </div>
+        <div class="wskazniki">
+          <span class="dioda" id="dioda"></span>
+          <span class="etykieta-diody" id="etykietaDiody">GOTOWE</span>
+          <span class="slupki" id="slupki" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        </div>
+      </div>
+
+      <div class="sterowanie">
+        <button class="okragly" id="btnPoprzednia" aria-label="Poprzednia stacja">
+          <svg viewBox="0 0 24 24"><path d="M7 6h2.2v12H7zm3.5 6 8 6V6z"/></svg>
+        </button>
+        <button class="okragly duzy" id="btnPlay" aria-label="Odtwarzaj">
+          <svg class="ikona-play" viewBox="0 0 24 24"><path d="M8 5.3v13.4L19 12z"/></svg>
+          <svg class="ikona-pauza ukryty" viewBox="0 0 24 24"><path d="M7 5h3.2v14H7zm6.8 0H17v14h-3.2z"/></svg>
+        </button>
+        <button class="okragly" id="btnNastepna" aria-label="Następna stacja">
+          <svg viewBox="0 0 24 24"><path d="M14.8 6H17v12h-2.2zM5.5 6l8 6-8 6z"/></svg>
+        </button>
+        <button class="okragly" id="btnWycisz" aria-label="Wycisz">
+          <svg class="ikona-glosnik" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zm11.5 3a4 4 0 0 0-2-3.46v6.92A4 4 0 0 0 15.5 12z"/></svg>
+          <svg class="ikona-cisza ukryty" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zm15.5-.9-1.4-1.4-2.1 2.1-2.1-2.1-1.4 1.4 2.1 2.1-2.1 2.1 1.4 1.4 2.1-2.1 2.1 2.1 1.4-1.4-2.1-2.1z"/></svg>
+        </button>
+      </div>
+
+      <div class="glosnosc">
+        <input type="range" id="suwak" min="0" max="100" value="70" aria-label="Głośność">
+      </div>
+    </div>
+
+    <!-- PRAWA: listy i kafelki -->
+    <div class="prawa">
+      <div class="listy">
+        <div class="zakladki" id="zakladki"></div>
+        <div class="narzedzia-list">
+          <button class="ikonka pilne" id="btnOdswiez" title="Podłącz się do stacji jeszcze raz">Odśwież</button>
+          <button class="ikonka pilne" id="btnRestartSieci" title="Zbuduj wszystkie połączenia od nowa">Restart sieci</button>
+          <button class="ikonka pilne" id="btnRestartApki" title="Uruchom całą aplikację od nowa">Restart apki</button>
+          <button class="ikonka" id="btnWyglad" title="Skórki i kolory">Wygląd</button>
+          <button class="ikonka" id="btnOtworzKatalog" title="Otwórz katalog stacji — dodawanie, edycja, wyszukiwarka">Katalog</button>
+          <button class="ikonka" id="btnKolejnosc" title="Ustaw kolejność stacji na liście">Kolejność</button>
+          <button class="ikonka" id="btnSprawdz" title="Sprawdź, które stacje odpowiadają">Sprawdź</button>
+          <button class="ikonka" id="btnZmienNazwe" title="Zmień nazwę listy">Nazwa</button>
+          <button class="ikonka" id="btnUsunListe" title="Usuń tę listę">Usuń</button>
+        </div>
+      </div>
+      <div class="kafelki" id="kafelki"></div>
+    </div>
+
+  </div>
+
+  <div class="stopka" id="stopka"></div>
+</div>
+
+<!-- NAKLADKA Z PANELAMI -->
+<div class="zaslona ukryty" id="zaslona"></div>
+
+<div class="panel ukryty" id="panelKatalog">
+  <div class="panel-gora">
+    <div class="kategorie" id="kategorie"></div>
+    <input type="search" id="szukaj" placeholder="Szukaj stacji…" autocomplete="off">
+    <button class="kategoria ukryty" id="btnZakresSieci" title="Przełącz między stacjami polskimi a światowymi">Polska</button>
+  </div>
+  <div class="pasek-info ukryty" id="paskInfo"></div>
+  <div class="lista-katalogu" id="listaKatalogu"></div>
+  <div class="panel-dol">
+    <span class="licznik" id="licznikListy"></span>
+    <button class="btn-drugi" id="btnEdytujKatalog">Edytuj katalog</button>
+    <button class="btn-drugi" id="btnWlasna">+ Dodaj stację</button>
+    <button class="btn-glowny" data-zamknij>Gotowe</button>
+  </div>
+</div>
+
+<div class="panel ukryty" id="panelWyglad">
+  <div class="panel-tytul">Układ ekranu</div>
+  <div class="skorki" id="skorki"></div>
+  <div class="panel-tytul" style="margin-top:14px">Kolory</div>
+  <div class="palety" id="palety"></div>
+  <div class="panel-tytul ukryty" id="tytulWyjsciaAudio" style="margin-top:14px">Wyjście dźwięku</div>
+  <select class="ukryty" id="wyjscieAudio"></select>
+  <div class="panel-dol">
+    <button class="btn-glowny" data-zamknij>Gotowe</button>
+  </div>
+</div>
+
+<div class="panel ukryty" id="panelForm">
+  <div class="panel-tytul" id="tytulForm">Nowa stacja</div>
+  <label for="poleNazwa">Nazwa</label>
+  <input id="poleNazwa" type="text" autocomplete="off" placeholder="np. Moje Radio">
+  <label for="poleUrl">Adres strumienia</label>
+  <input id="poleUrl" type="text" autocomplete="off" placeholder="https://…">
+  <div id="blokKatalogu">
+    <label for="poleKategoria">Zapisz w katalogu na stałe</label>
+    <select id="poleKategoria">
+      <option value="">nie zapisuj — tylko na tej liście</option>
+      <option value="rock">w kategorii Rockowe</option>
+      <option value="ogolne">w kategorii Ogólne</option>
+      <option value="tematyczne">w kategorii Tematyczne</option>
+    </select>
+  </div>
+  <div class="blad ukryty" id="bladForm"></div>
+  <div class="panel-dol">
+    <button class="btn-usun ukryty" id="btnUsunStacje">Usuń z listy</button>
+    <button class="btn-drugi" data-zamknij>Anuluj</button>
+    <button class="btn-glowny" id="btnZapisz">Zapisz</button>
+  </div>
+</div>
+
+<audio id="odtwarzacz"></audio>
+<script src="stacje.js"></script>
+<script src="app.js"></script>
+<script>
+  // rejestracja obslugi trybu offline - tylko na stronie, na Macu niepotrzebna
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>

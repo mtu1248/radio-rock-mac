@@ -1,0 +1,217 @@
+import Cocoa
+import WebKit
+import MediaPlayer
+
+/// Pomocnicza funkcja: zamienia dowolny string Swifta na bezpieczny literal JS
+/// (przez serializacje JSON, wiec cudzyslowy/backslashe/unicode nie wywroca skryptu).
+func jsString(_ tekst: String) -> String {
+    guard let dane = try? JSONSerialization.data(withJSONObject: [tekst]),
+          let json = String(data: dane, encoding: .utf8) else { return "\"\"" }
+    return String(json.dropFirst().dropLast())
+}
+
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+
+    private var statusItem: NSStatusItem!
+    private var okno: NSWindow!
+    private var webView: WKWebView!
+    private var menuWyjscia: NSMenu!
+
+    private let webBridge = WebBridge()
+    private let audioEngine = AudioEngine()
+    private let serwer = ServerManager()
+    private let deviceAudio = DeviceAudio()
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
+
+        audioEngine.wybraneUrzadzenieUID = {
+            let zapisane = UserDefaults.standard.string(forKey: "wyjscieAudioUID") ?? ""
+            return zapisane.isEmpty ? nil : zapisane
+        }()
+        audioEngine.webBridge = webBridge
+        webBridge.audioEngine = audioEngine
+
+        przygotujOkno()
+        przygotujStatusItem()
+        przygotujKomendyMultimedialne()
+
+        webBridge.wyslijDoJS = { [weak self] js in
+            DispatchQueue.main.async {
+                self?.webView.evaluateJavaScript(js, completionHandler: nil)
+            }
+        }
+
+        deviceAudio.naZmiane = { [weak self] in
+            DispatchQueue.main.async {
+                self?.odswiezMenuWyjscia()
+                self?.wyslijUrzadzeniaDoJS()
+            }
+        }
+        deviceAudio.wystartuj()
+        odswiezMenuWyjscia()
+
+        serwer.znajdzLubUruchom { [weak self] port in
+            guard let self = self else { return }
+            guard let port = port else {
+                NSLog("Radio Rock: nie udalo sie uruchomic ani znalezc lokalnego serwera")
+                return
+            }
+            let adres = "http://127.0.0.1:\(port)/"
+            self.audioEngine.adresBazowy = adres
+            guard let url = URL(string: adres) else { return }
+            self.webView.load(URLRequest(url: url))
+            self.wyslijUrzadzeniaDoJS()
+        }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        audioEngine.zatrzymaj()
+        serwer.zatrzymaj()
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
+    // MARK: - Okno
+
+    private func przygotujOkno() {
+        let config = WKWebViewConfiguration()
+        let kontroler = WKUserContentController()
+        kontroler.add(webBridge, name: "mac")
+        kontroler.addUserScript(WKUserScript(source: WebBridge.jsShim,
+                                              injectionTime: .atDocumentStart,
+                                              forMainFrameOnly: true))
+        config.userContentController = kontroler
+
+        let ramka = NSRect(x: 0, y: 0, width: 1040, height: 680)
+        webView = WKWebView(frame: ramka, configuration: config)
+        webView.autoresizingMask = [.width, .height]
+
+        okno = NSWindow(contentRect: ramka,
+                         styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                         backing: .buffered,
+                         defer: false)
+        okno.title = "Radio Rock"
+        okno.contentView = webView
+        okno.isReleasedWhenClosed = false
+        okno.delegate = self
+        okno.center()
+        okno.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        // Zamkniecie okna nie wylacza radia - dziala dalej w tle, ikona w pasku menu zostaje.
+        sender.orderOut(nil)
+        return false
+    }
+
+    // MARK: - Pasek menu
+
+    private func przygotujStatusItem() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        if let przycisk = statusItem.button {
+            let obraz = NSImage(systemSymbolName: "antenna.radiowaves.left.and.right",
+                                 accessibilityDescription: "Radio Rock")
+            obraz?.isTemplate = true
+            przycisk.image = obraz
+        }
+
+        let menu = NSMenu()
+        menu.addItem(withTitle: "Pokaż Radio Rock", action: #selector(pokazOkno), keyEquivalent: "").target = self
+        menu.addItem(NSMenuItem.separator())
+
+        menuWyjscia = NSMenu()
+        let pozycjaWyjscia = NSMenuItem(title: "Wyjście audio", action: nil, keyEquivalent: "")
+        pozycjaWyjscia.submenu = menuWyjscia
+        menu.addItem(pozycjaWyjscia)
+
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(withTitle: "Odśwież", action: #selector(odswiezRadio), keyEquivalent: "").target = self
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(withTitle: "Zamknij Radio Rock", action: #selector(zamknijAplikacje), keyEquivalent: "").target = self
+
+        statusItem.menu = menu
+    }
+
+    private func odswiezMenuWyjscia() {
+        guard let menuWyjscia = menuWyjscia else { return }
+        menuWyjscia.removeAllItems()
+
+        let domyslna = NSMenuItem(title: "Domyślne wyjście systemu",
+                                   action: #selector(wybierzUrzadzenieZMenu(_:)),
+                                   keyEquivalent: "")
+        domyslna.target = self
+        domyslna.representedObject = ""
+        domyslna.state = (audioEngine.wybraneUrzadzenieUID ?? "").isEmpty ? .on : .off
+        menuWyjscia.addItem(domyslna)
+        menuWyjscia.addItem(NSMenuItem.separator())
+
+        for urzadzenie in deviceAudio.urzadzenia {
+            let pozycja = NSMenuItem(title: urzadzenie.nazwa,
+                                      action: #selector(wybierzUrzadzenieZMenu(_:)),
+                                      keyEquivalent: "")
+            pozycja.target = self
+            pozycja.representedObject = urzadzenie.uid
+            pozycja.state = (audioEngine.wybraneUrzadzenieUID == urzadzenie.uid) ? .on : .off
+            menuWyjscia.addItem(pozycja)
+        }
+    }
+
+    @objc private func wybierzUrzadzenieZMenu(_ nadawca: NSMenuItem) {
+        let uid = (nadawca.representedObject as? String) ?? ""
+        ustawWyjscie(uid.isEmpty ? nil : uid)
+    }
+
+    private func ustawWyjscie(_ uid: String?) {
+        audioEngine.ustawUrzadzenieWyjsciowe(uid)
+        UserDefaults.standard.set(uid ?? "", forKey: "wyjscieAudioUID")
+        odswiezMenuWyjscia()
+        webBridge.wyslijDoJS?("window.zNatywnego_urzadzenie && window.zNatywnego_urzadzenie(\(jsString(uid ?? "")));")
+    }
+
+    private func wyslijUrzadzeniaDoJS() {
+        guard let wyslij = webBridge.wyslijDoJS else { return }
+        let lista = deviceAudio.urzadzenia.map { ["uid": $0.uid, "nazwa": $0.nazwa] }
+        guard let dane = try? JSONSerialization.data(withJSONObject: lista),
+              let json = String(data: dane, encoding: .utf8) else { return }
+        let aktualny = audioEngine.wybraneUrzadzenieUID ?? ""
+        wyslij("window.zNatywnego_urzadzenia && window.zNatywnego_urzadzenia(\(json), \(jsString(aktualny)));")
+    }
+
+    @objc private func pokazOkno() {
+        okno.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc private func odswiezRadio() {
+        audioEngine.odswiez()
+    }
+
+    @objc private func zamknijAplikacje() {
+        NSApp.terminate(nil)
+    }
+
+    // MARK: - Klawisze multimedialne / centrum sterowania
+
+    private func przygotujKomendyMultimedialne() {
+        let centrum = MPRemoteCommandCenter.shared()
+        centrum.playCommand.addTarget { [weak self] _ in
+            self?.audioEngine.wznow(); return .success
+        }
+        centrum.pauseCommand.addTarget { [weak self] _ in
+            self?.audioEngine.pauza(); return .success
+        }
+        centrum.togglePlayPauseCommand.addTarget { [weak self] _ in
+            self?.audioEngine.przelacz(); return .success
+        }
+        centrum.nextTrackCommand.addTarget { [weak self] _ in
+            self?.audioEngine.nastepna(); return .success
+        }
+        centrum.previousTrackCommand.addTarget { [weak self] _ in
+            self?.audioEngine.poprzednia(); return .success
+        }
+    }
+}
