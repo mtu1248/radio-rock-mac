@@ -1,1 +1,69 @@
+name: Buduj Radio Rock (Mac)
 
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  buduj:
+    runs-on: macos-14
+    steps:
+      - name: Pobierz kod
+        uses: actions/checkout@v4
+
+      - name: Wersje narzedzi
+        run: |
+          swift --version
+          sw_vers
+
+      - name: swift build (release)
+        run: swift build -c release
+
+      - name: Zloz Radio Rock.app
+        run: |
+          set -e
+          APP="Radio Rock.app"
+          rm -rf "$APP"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+
+          cp .build/release/RadioRockMac "$APP/Contents/MacOS/RadioRockMac"
+          chmod +x "$APP/Contents/MacOS/RadioRockMac"
+
+          cp Resources/Info.plist "$APP/Contents/Info.plist"
+          cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+          cp -R Resources/ikona.iconset "$APP/Contents/Resources/ikona.iconset"
+          cp -R Resources/www "$APP/Contents/Resources/www"
+          cp Resources/serwer.py "$APP/Contents/Resources/serwer.py"
+
+          codesign --force --deep --sign - "$APP"
+          codesign --verify --verbose "$APP"
+
+      - name: Spakuj paczke dla Maria
+        run: |
+          set -e
+          PACZKA="Radio_Rock_Mac_8.0"
+          rm -rf "$PACZKA"
+          mkdir -p "$PACZKA"
+          cp -R "Radio Rock.app" "$PACZKA/"
+          cp Instalator/1_ZAINSTALUJ.command "$PACZKA/"
+          cp Instalator/ODINSTALUJ.command "$PACZKA/"
+          chmod +x "$PACZKA"/*.command
+          ditto -c -k --sequesterRsrc --keepParent "$PACZKA" "Radio_Rock_Mac_8.0.zip"
+
+      - name: Wyslij jako artefakt builda
+        uses: actions/upload-artifact@v4
+        with:
+          name: Radio_Rock_Mac_8.0
+          path: Radio_Rock_Mac_8.0.zip
+
+      - name: Publikuj Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v8.0-build${{ github.run_number }}
+          name: Radio Rock Mac 8.0 (build ${{ github.run_number }})
+          files: Radio_Rock_Mac_8.0.zip
+          generate_release_notes: false
