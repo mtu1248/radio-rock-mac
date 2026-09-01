@@ -179,10 +179,19 @@ final class AudioEngine: NSObject {
 
         let item = AVPlayerItem(url: url)
         let nowyPlayer = AVPlayer(playerItem: item)
-        // Wazne dla zywych strumieni: domyslny algorytm AVPlayera potrafi
-        // czekac w nieskonczonosc na "lepszy" bufor przy strumieniu bez
-        // znanego czasu trwania. Wylaczamy to i puszczamy od razu.
-        nowyPlayer.automaticallyWaitsToMinimizeStalling = false
+        // Runda 5-6 mialy tu `automaticallyWaitsToMinimizeStalling = false`
+        // (zeby przyspieszyc start zywych strumieni), ale to wlasnie okazalo
+        // sie przyczyna nowego, cichszego bledu: AVPlayer wchodzil w
+        // timeControlStatus == .playing, sygnalizowal appce i JS-owi ze gra,
+        // a fizycznie CoreAudio nigdy nie budowal potoku dzwieku (zero
+        // dzwieku, zero ruchu na wskazniku glosnosci systemu, zero sladu
+        // HALC/FigStreamPlayer w logu). Dowod: QuickTime Player, ktory uzywa
+        // dokladnie tego samego AVPlayera z DOMYSLNYMI ustawieniami, na tym
+        // samym strumieniu z /api/strumien, gral bez zarzutu. Jedyna
+        // nietypowa roznica w naszym kodzie to wlasnie ta flaga - wracamy do
+        // domyslnego `true`. Ryzyko "czeka w nieskonczonosc na bufor" jest
+        // juz i tak pokryte dwoma niezaleznymi watchdogami w pulsKontrolny().
+        nowyPlayer.automaticallyWaitsToMinimizeStalling = true
         if let uid = wybraneUrzadzenieUID, !uid.isEmpty {
             nowyPlayer.audioOutputDeviceUniqueID = uid
         }
@@ -199,6 +208,12 @@ final class AudioEngine: NSObject {
                     self.zaplanujPonowienie()
                 case .readyToPlay:
                     self.probaPonowienia = 0
+                    // Belt-and-suspenders: gdyby play() wywolane przed
+                    // gotowoscia itemu nie "zlapalo sie" poprawnie (podejrzenie
+                    // z rundy 7 - cichy playing bez dzwieku), zadajemy
+                    // odtwarzania jeszcze raz teraz, gdy item na pewno jest
+                    // gotowy. Bezpieczne i tanie do powtorzenia.
+                    self.player?.play()
                 default:
                     break
                 }
