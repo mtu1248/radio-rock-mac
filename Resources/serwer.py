@@ -479,6 +479,23 @@ class Uchwyt(http.server.SimpleHTTPRequestHandler):
                 pass
             return
 
+        # WAZNE: socket.create_connection() w _polacz() ustawia limit 8s na
+        # NAWIAZANIE polaczenia, ale ten limit zostaje aktywny takze na kazdym
+        # kolejnym odczycie z gniazda - wlacznie z ta petla, ktora trwa tak
+        # dlugo jak samo sluchanie radia. Zwykla, normalna przerwa w nadawaniu
+        # ze stacji dluzsza niz 8s (typowa dla zywego strumienia) powodowala
+        # cichy timeout i zerwanie calego przekazywania bez zadnego bledu -
+        # dokladnie objaw "gra kilkanascie-kilkadziesiat sekund i nagle na
+        # zawsze cichnie". Ten sam blad (za krotki limit) zlapalismy juz w
+        # wersji androidowej (6.6/7.2, limit podniesiony z 5 do 12s). Tutaj:
+        # po udanym polaczeniu zdejmujemy krotki limit na czas trwania
+        # strumieniowania. Potwierdzone testem: bez tej linii strumien urywa
+        # sie dokladnie po 8s przerwy w nadawaniu, z nia - nie.
+        try:
+            gniazdo.settimeout(20)
+        except Exception:
+            pass
+
         try:
             typ = naglowki.get("content-type") or "audio/mpeg"
             self.send_response(200)

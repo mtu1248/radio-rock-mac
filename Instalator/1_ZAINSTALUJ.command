@@ -43,10 +43,18 @@ xattr -dr com.apple.quarantine "$CEL" 2>/dev/null
 codesign --force --deep --sign - "$CEL" 2>/dev/null
 touch "$CEL"
 
-echo "  5/5  Odswiezam Launchpad..."
-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
-  -f "$CEL" 2>/dev/null
+echo "  5/5  Czyszcze duchy w Launchpadzie i odswiezam..."
+# Sama podmiana bundla w /Applications (krok 2) nie usuwa starych wpisow z
+# bazy LaunchServices - po kilku instalacjach ad-hoc-podpisanej appki
+# Launchpad potrafi pokazywac 2-3 ikony tej samej appki, mimo ze na dysku
+# jest tylko jeden "Radio Rock.app" (sprawdzone: ls /Applications). To duchy
+# w bazie LaunchServices, nie duplikaty plikow - trzeba ja w calosci
+# przebudowac, samo "-f" na jeden bundle tego nie czysci.
+LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+"$LSREGISTER" -kill -r -domain local -domain user 2>/dev/null
+"$LSREGISTER" -f "$CEL" 2>/dev/null
 killall Dock 2>/dev/null
+killall Launchpad 2>/dev/null
 
 echo ""
 echo "  ── GOTOWE ────────────────────────────────────────────"

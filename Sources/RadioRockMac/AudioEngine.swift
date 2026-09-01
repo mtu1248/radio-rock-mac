@@ -35,6 +35,7 @@ final class AudioEngine: NSObject {
     private var obserwacjaStatus: NSKeyValueObservation?
     private var obserwacjaCzasKontroli: NSKeyValueObservation?
     private var oczekiwanieOd: Date?
+    private var czasStartu: Date?
 
     private var timerTytulu: Timer?
     private var timerPuls: Timer?
@@ -84,6 +85,7 @@ final class AudioEngine: NSObject {
         celowoZatrzymany = true
         player?.pause()
         timerPonowienia?.invalidate()
+        czasStartu = nil
         wyslijStan()
     }
 
@@ -151,6 +153,7 @@ final class AudioEngine: NSObject {
         celowoZatrzymany = false
         probaPonowienia = 0
         oczekiwanieOd = nil
+        czasStartu = Date()
         timerPonowienia?.invalidate()
 
         let stacja = kolejka[nowyIndeks]
@@ -196,6 +199,7 @@ final class AudioEngine: NSObject {
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 self.oczekiwanieOd = (player.timeControlStatus == .waitingToPlayAtSpecifiedRate) ? Date() : nil
+                if player.timeControlStatus == .playing { self.czasStartu = nil }
                 self.wyslijStan()
             }
         }
@@ -235,6 +239,17 @@ final class AudioEngine: NSObject {
         guard !celowoZatrzymany, !kolejka.isEmpty else { return }
         if let od = oczekiwanieOd, Date().timeIntervalSince(od) > 20 {
             oczekiwanieOd = nil
+            odtworz(indeks: indeks)
+            return
+        }
+        // Zabezpieczenie na wypadek, gdy AVPlayer po .play() w ogole nie ruszy
+        // stanu (nie wejdzie nawet w waitingToPlayAtSpecifiedRate) - obserwowane
+        // przy "zimnym" starcie appki: zero bledow, zero zmian stanu, cisza w
+        // nieskonczonosc (timeControlStatus utyka na .paused). Stary puls tego
+        // nie lapal, bo pilnowal tylko przypadku "utknal w buforowaniu", a nie
+        // "nigdy nawet nie zaczal". Dajemy 12 s od proby, potem twardy restart.
+        if let start = czasStartu, Date().timeIntervalSince(start) > 12 {
+            czasStartu = nil
             odtworz(indeks: indeks)
         }
     }
