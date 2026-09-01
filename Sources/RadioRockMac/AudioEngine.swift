@@ -116,8 +116,8 @@ final class AudioEngine: NSObject {
     }
 
     func ustawUrzadzenieWyjsciowe(_ uid: String?) {
-        wybraneUrzadzenieUID = uid
-        player?.audioOutputDeviceUniqueID = uid
+        wybraneUrzadzenieUID = (uid?.isEmpty ?? true) ? nil : uid
+        player?.audioOutputDeviceUniqueID = wybraneUrzadzenieUID
     }
 
     func zatrzymaj() {
@@ -157,7 +157,9 @@ final class AudioEngine: NSObject {
         // czekac w nieskonczonosc na "lepszy" bufor przy strumieniu bez
         // znanego czasu trwania. Wylaczamy to i puszczamy od razu.
         nowyPlayer.automaticallyWaitsToMinimizeStalling = false
-        nowyPlayer.audioOutputDeviceUniqueID = wybraneUrzadzenieUID
+        if let uid = wybraneUrzadzenieUID, !uid.isEmpty {
+            nowyPlayer.audioOutputDeviceUniqueID = uid
+        }
         player = nowyPlayer
 
         obserwacjaStatus = item.observe(\.status, options: [.new]) { [weak self] item, _ in
@@ -165,6 +167,9 @@ final class AudioEngine: NSObject {
                 guard let self = self else { return }
                 switch item.status {
                 case .failed:
+                    if let blad = item.error {
+                        NSLog("Radio Rock: item.status = failed: %@", blad as NSError)
+                    }
                     self.zaplanujPonowienie()
                 case .readyToPlay:
                     self.probaPonowienia = 0
@@ -193,6 +198,9 @@ final class AudioEngine: NSObject {
     }
 
     @objc private func bladOdtwarzania(_ powiadomienie: Notification) {
+        if let blad = powiadomienie.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] as? NSError {
+            NSLog("Radio Rock: nieudane odtwarzanie: %@", blad)
+        }
         zaplanujPonowienie()
     }
 
@@ -271,7 +279,7 @@ final class AudioEngine: NSObject {
     // MARK: - Wysylki do JS i do centrum sterowania systemu
 
     private func wyslijStan() {
-        let gra = !celowoZatrzymany && player?.timeControlStatus != .paused
+        let gra = !celowoZatrzymany && player?.timeControlStatus == .playing
         webBridge?.wyslijDoJS?("window.zNatywnego_stan && window.zNatywnego_stan(\(gra));")
         MPNowPlayingInfoCenter.default().playbackState = gra ? .playing : .paused
     }
