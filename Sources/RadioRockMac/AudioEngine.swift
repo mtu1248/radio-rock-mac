@@ -59,29 +59,32 @@ final class AudioEngine: NSObject {
     func ustawListe(_ nowaKolejka: [StacjaKolejki], indeks nowyIndeks: Int) {
         kolejka = nowaKolejka
         celowoZatrzymany = false
-        odtworz(indeks: nowyIndeks)
+        odtworz(indeks: nowyIndeks, powod: "ustawListe")
     }
 
-    func przelacz() {
+    func przelacz(powod: String = "JS") {
+        NSLog("Radio Rock: przelacz() powod=%@", powod)
         guard player != nil else { return }
         if celowoZatrzymany || player?.timeControlStatus == .paused {
-            wznow()
+            wznow(powod: powod)
         } else {
-            pauza()
+            pauza(powod: powod)
         }
     }
 
-    func wznow() {
+    func wznow(powod: String = "JS") {
+        NSLog("Radio Rock: wznow() powod=%@", powod)
         celowoZatrzymany = false
         if player == nil, !kolejka.isEmpty {
-            odtworz(indeks: indeks)
+            odtworz(indeks: indeks, powod: "wznow-playerNil/\(powod)")
             return
         }
         player?.play()
         wyslijStan()
     }
 
-    func pauza() {
+    func pauza(powod: String = "JS") {
+        NSLog("Radio Rock: pauza() powod=%@", powod)
         celowoZatrzymany = true
         player?.pause()
         timerPonowienia?.invalidate()
@@ -89,13 +92,18 @@ final class AudioEngine: NSObject {
         wyslijStan()
     }
 
-    func nastepna() { przejdz(o: 1) }
-    func poprzednia() { przejdz(o: -1) }
+    // Kazda zmiana stacji jest logowana z "powodem" - to jedyny sposob, zeby
+    // odroznic w logach klik strony, klawisz multimedialny/gest AirPods,
+    // watchdog i automatyczny retry. Bez tego nie da sie ustalic, co
+    // faktycznie przelacza stacje w tle (patrz CLAUDE.md, runda 6).
+    func nastepna(powod: String = "JS") { przejdz(o: 1, powod: powod) }
+    func poprzednia(powod: String = "JS") { przejdz(o: -1, powod: powod) }
 
-    private func przejdz(o krok: Int) {
+    private func przejdz(o krok: Int, powod: String) {
         guard !kolejka.isEmpty else { return }
         indeks = ((indeks + krok) % kolejka.count + kolejka.count) % kolejka.count
-        odtworz(indeks: indeks)
+        NSLog("Radio Rock: przejdz(o: %d) -> nowy indeks %d, powod=%@", krok, indeks, powod)
+        odtworz(indeks: indeks, powod: "przejdz/\(powod)")
     }
 
     func ustawGlosnosc(_ wartosc: Float) {
@@ -108,13 +116,13 @@ final class AudioEngine: NSObject {
 
     /// Odswiez = ponowne zaladowanie biezacej stacji (dla zywego strumienia
     /// nie ma czego "przewijac" - to po prostu swiezy start).
-    func odswiez() {
+    func odswiez(powod: String = "JS") {
         guard !kolejka.isEmpty else { return }
-        odtworz(indeks: indeks)
+        odtworz(indeks: indeks, powod: "odswiez/\(powod)")
     }
 
-    func restartPolaczenia() {
-        odswiez()
+    func restartPolaczenia(powod: String = "JS") {
+        odswiez(powod: "restartPolaczenia/\(powod)")
     }
 
     func ustawUrzadzenieWyjsciowe(_ uid: String?) {
@@ -147,8 +155,10 @@ final class AudioEngine: NSObject {
         return URL(string: "\(bazowy)api/strumien?url=\(zakodowany)")
     }
 
-    private func odtworz(indeks nowyIndeks: Int) {
+    private func odtworz(indeks nowyIndeks: Int, powod: String) {
         guard kolejka.indices.contains(nowyIndeks) else { return }
+        NSLog("Radio Rock: odtworz(indeks: %d, stacja: %@) powod=%@",
+              nowyIndeks, kolejka[nowyIndeks].nazwa, powod)
         indeks = nowyIndeks
         celowoZatrzymany = false
         probaPonowienia = 0
@@ -229,7 +239,7 @@ final class AudioEngine: NSObject {
         timerPonowienia?.invalidate()
         timerPonowienia = Timer.scheduledTimer(withTimeInterval: opoznienie, repeats: false) { [weak self] _ in
             guard let self = self, !self.celowoZatrzymany else { return }
-            self.odtworz(indeks: self.indeks)
+            self.odtworz(indeks: self.indeks, powod: "auto-retry#\(self.probaPonowienia)")
         }
     }
 
@@ -239,7 +249,7 @@ final class AudioEngine: NSObject {
         guard !celowoZatrzymany, !kolejka.isEmpty else { return }
         if let od = oczekiwanieOd, Date().timeIntervalSince(od) > 20 {
             oczekiwanieOd = nil
-            odtworz(indeks: indeks)
+            odtworz(indeks: indeks, powod: "watchdog-utknal-w-buforowaniu(>20s)")
             return
         }
         // Zabezpieczenie na wypadek, gdy AVPlayer po .play() w ogole nie ruszy
@@ -250,13 +260,13 @@ final class AudioEngine: NSObject {
         // "nigdy nawet nie zaczal". Dajemy 12 s od proby, potem twardy restart.
         if let start = czasStartu, Date().timeIntervalSince(start) > 12 {
             czasStartu = nil
-            odtworz(indeks: indeks)
+            odtworz(indeks: indeks, powod: "watchdog-nigdy-nie-ruszyl(>12s)")
         }
     }
 
     private func wznowNatychmiast() {
         guard !celowoZatrzymany, !kolejka.isEmpty else { return }
-        odtworz(indeks: indeks)
+        odtworz(indeks: indeks, powod: "siec-przywrocona")
     }
 
     // MARK: - Siec

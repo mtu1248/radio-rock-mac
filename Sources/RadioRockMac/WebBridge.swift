@@ -37,22 +37,22 @@ final class WebBridge: NSObject, WKScriptMessageHandler {
             audioEngine.ustawWyciszenie((dane["czy"] as? Bool) ?? false)
 
         case "nastepna":
-            audioEngine.nastepna()
+            audioEngine.nastepna(powod: "JS-strona")
 
         case "poprzednia":
-            audioEngine.poprzednia()
+            audioEngine.poprzednia(powod: "JS-strona")
 
         case "przelacz":
-            audioEngine.przelacz()
+            audioEngine.przelacz(powod: "JS-strona")
 
         case "pauza":
-            audioEngine.pauza()
+            audioEngine.pauza(powod: "JS-strona")
 
         case "odswiez":
-            audioEngine.odswiez()
+            audioEngine.odswiez(powod: "JS-strona")
 
         case "restartPolaczenia":
-            audioEngine.restartPolaczenia()
+            audioEngine.restartPolaczenia(powod: "JS-strona")
 
         case "restartAplikacji":
             restartujAplikacje()

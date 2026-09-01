@@ -23,6 +23,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let deviceAudio = DeviceAudio()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if let inna = innaDzialajacaInstancja() {
+            NSLog("Radio Rock: inna instancja juz dziala (PID %d) - aktywuje ja i konczy ta kopie",
+                  inna.processIdentifier)
+            inna.activate(options: [.activateAllWindows])
+            NSApp.terminate(nil)
+            return
+        }
+
         NSApp.setActivationPolicy(.accessory)
 
         audioEngine.wybraneUrzadzenieUID = {
@@ -62,6 +70,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             guard let url = URL(string: adres) else { return }
             self.webView.load(URLRequest(url: url))
             self.wyslijUrzadzeniaDoJS()
+        }
+    }
+
+    private func innaDzialajacaInstancja() -> NSRunningApplication? {
+        let wlasny = ProcessInfo.processInfo.processIdentifier
+        return NSWorkspace.shared.runningApplications.first {
+            $0.bundleIdentifier == Bundle.main.bundleIdentifier && $0.processIdentifier != wlasny
         }
     }
 
@@ -187,7 +202,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     @objc private func odswiezRadio() {
-        audioEngine.odswiez()
+        audioEngine.odswiez(powod: "MenuPasek")
     }
 
     @objc private func zamknijAplikacje() {
@@ -199,19 +214,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func przygotujKomendyMultimedialne() {
         let centrum = MPRemoteCommandCenter.shared()
         centrum.playCommand.addTarget { [weak self] _ in
-            self?.audioEngine.wznow(); return .success
+            self?.audioEngine.wznow(powod: "MediaKey/CentrumSterowania"); return .success
         }
         centrum.pauseCommand.addTarget { [weak self] _ in
-            self?.audioEngine.pauza(); return .success
+            self?.audioEngine.pauza(powod: "MediaKey/CentrumSterowania"); return .success
         }
         centrum.togglePlayPauseCommand.addTarget { [weak self] _ in
-            self?.audioEngine.przelacz(); return .success
+            self?.audioEngine.przelacz(powod: "MediaKey/CentrumSterowania"); return .success
         }
         centrum.nextTrackCommand.addTarget { [weak self] _ in
-            self?.audioEngine.nastepna(); return .success
+            self?.audioEngine.nastepna(powod: "MediaKey/CentrumSterowania-NASTEPNA"); return .success
         }
         centrum.previousTrackCommand.addTarget { [weak self] _ in
-            self?.audioEngine.poprzednia(); return .success
+            self?.audioEngine.poprzednia(powod: "MediaKey/CentrumSterowania-POPRZEDNIA"); return .success
         }
     }
 }
