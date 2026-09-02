@@ -36,6 +36,8 @@ final class AudioEngine: NSObject {
     private var obserwacjaCzasKontroli: NSKeyValueObservation?
     private var oczekiwanieOd: Date?
     private var czasStartu: Date?
+    private var ostatniaGlosnosc: Float = 1.0
+    private var ostatnieWyciszenie = false
 
     private var timerTytulu: Timer?
     private var timerPuls: Timer?
@@ -107,10 +109,12 @@ final class AudioEngine: NSObject {
     }
 
     func ustawGlosnosc(_ wartosc: Float) {
+        ostatniaGlosnosc = wartosc
         player?.volume = wartosc
     }
 
     func ustawWyciszenie(_ czy: Bool) {
+        ostatnieWyciszenie = czy
         player?.isMuted = czy
     }
 
@@ -195,6 +199,8 @@ final class AudioEngine: NSObject {
         if let uid = wybraneUrzadzenieUID, !uid.isEmpty {
             nowyPlayer.audioOutputDeviceUniqueID = uid
         }
+        nowyPlayer.volume = ostatniaGlosnosc
+        nowyPlayer.isMuted = ostatnieWyciszenie
         player = nowyPlayer
 
         obserwacjaStatus = item.observe(\.status, options: [.new]) { [weak self] item, _ in
