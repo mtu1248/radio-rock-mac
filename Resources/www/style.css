@@ -829,11 +829,16 @@ body.tryb-edycji .olowek { opacity: 1; }
   flex: 1; min-width: 0;
 }
 .korektor-db { font-size: 9.5px; color: var(--ekran); min-height: 12px; }
-.korektor-suwak {
-  -webkit-appearance: slider-vertical;
-  width: 22px; height: 110px; margin: 0;
+input[type=range].korektor-suwak {
+  -webkit-appearance: none;
+  appearance: none;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 22px; height: 110px; margin: 0; padding: 0;
+  background: transparent;
   accent-color: var(--ekran);
 }
+input[type=range].korektor-suwak:focus-visible { outline: 2px solid var(--ekran); outline-offset: 1px; }
 .korektor-hz { font-size: 9px; color: var(--napis-slaby); letter-spacing: .02em; }
 
 .znacznik-wlasna {

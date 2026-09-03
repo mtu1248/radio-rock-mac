@@ -233,7 +233,9 @@ function rysujKorektor() {
     el('korektorPreset').addEventListener('change', function () {
       const nazwa = this.value;
       if (nazwa === 'wlasny' || !PRESETY_KOREKTORA[nazwa]) return;
-      most.ustawKorektor(PRESETY_KOREKTORA[nazwa].slice());
+      wzmocnieniaKorektora = PRESETY_KOREKTORA[nazwa].slice();
+      odswiezSuwakiKorektora();
+      most.ustawKorektor(wzmocnieniaKorektora.slice());
     });
   }
   odswiezSuwakiKorektora();
