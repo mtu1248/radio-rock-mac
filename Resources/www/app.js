@@ -165,6 +165,98 @@ window.zNatywnego_urzadzenie = function (uid) {
   el('wyjscieAudio').value = uid || '';
 };
 
+/* --- korektor dzwieku (rowniez tylko Mac) - jak wyzej: rozpoznajemy po tym,
+   ze mostek ma metode ustawKorektor. 10 pasm, wartosci w dB, -12..+12.
+   Presety to zwykle tablice liczb - appka macowa nic o nich nie wie, liczy
+   sie tylko finalna tablica wyslana przez most.ustawKorektor(). --- */
+const maKorektor = !!(most && typeof most.ustawKorektor === 'function');
+
+const PASMA_KOREKTORA = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+const PRESETY_KOREKTORA = {
+  plaski:    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  rock:      [4, 3, -2, -3, -1, 2, 5, 6, 6, 5],
+  pop:       [-1, 2, 4, 4, 2, -1, -2, -2, -1, -1],
+  jazz:      [3, 2, 1, 2, -1, -1, 0, 1, 2, 3],
+  klasyczna: [3, 2, 1, 0, 0, 0, -1, -1, -1, -2],
+  basy:      [7, 6, 5, 3, 1, 0, 0, 0, 0, 0],
+  wokal:     [-3, -3, -1, 2, 4, 4, 3, 1, -1, -2]
+};
+
+let wzmocnieniaKorektora = PRESETY_KOREKTORA.plaski.slice();
+let suwakiKorektora = [];
+let etykietyKorektora = [];
+
+function etykietaDb(db) { return (db > 0 ? '+' : '') + db; }
+
+function rysujKorektor() {
+  if (!maKorektor) return;
+  el('tytulKorektor').classList.remove('ukryty');
+  el('korektor').classList.remove('ukryty');
+  if (!suwakiKorektora.length) {
+    const kontener = el('korektorSuwaki');
+    PASMA_KOREKTORA.forEach(function (hz, i) {
+      const kolumna = document.createElement('div');
+      kolumna.className = 'korektor-pasmo';
+
+      const wartosc = document.createElement('span');
+      wartosc.className = 'korektor-db';
+      wartosc.textContent = '0';
+
+      const suwak = document.createElement('input');
+      suwak.type = 'range';
+      suwak.className = 'korektor-suwak';
+      suwak.min = '-12';
+      suwak.max = '12';
+      suwak.step = '1';
+      suwak.value = '0';
+      suwak.setAttribute('aria-label', 'Korektor ' + hz + ' Hz');
+      suwak.addEventListener('input', function () {
+        const db = parseInt(this.value, 10);
+        wzmocnieniaKorektora[i] = db;
+        wartosc.textContent = etykietaDb(db);
+        el('korektorPreset').value = 'wlasny';
+        most.ustawKorektor(wzmocnieniaKorektora.slice());
+      });
+
+      const etykieta = document.createElement('span');
+      etykieta.className = 'korektor-hz';
+      etykieta.textContent = hz >= 1000 ? (hz / 1000) + 'k' : String(hz);
+
+      kolumna.appendChild(wartosc);
+      kolumna.appendChild(suwak);
+      kolumna.appendChild(etykieta);
+      kontener.appendChild(kolumna);
+      suwakiKorektora.push(suwak);
+      etykietyKorektora.push(wartosc);
+    });
+
+    el('korektorPreset').addEventListener('change', function () {
+      const nazwa = this.value;
+      if (nazwa === 'wlasny' || !PRESETY_KOREKTORA[nazwa]) return;
+      most.ustawKorektor(PRESETY_KOREKTORA[nazwa].slice());
+    });
+  }
+  odswiezSuwakiKorektora();
+}
+
+function odswiezSuwakiKorektora() {
+  wzmocnieniaKorektora.forEach(function (db, i) {
+    if (suwakiKorektora[i]) suwakiKorektora[i].value = db;
+    if (etykietyKorektora[i]) etykietyKorektora[i].textContent = etykietaDb(db);
+  });
+  const dopasowany = Object.keys(PRESETY_KOREKTORA).find(function (nazwa) {
+    return PRESETY_KOREKTORA[nazwa].every(function (v, i) { return v === wzmocnieniaKorektora[i]; });
+  });
+  const wybor = el('korektorPreset');
+  if (wybor) wybor.value = dopasowany || 'wlasny';
+}
+
+window.zNatywnego_korektor = function (pasma) {
+  if (!maKorektor || !Array.isArray(pasma) || pasma.length !== PASMA_KOREKTORA.length) return;
+  wzmocnieniaKorektora = pasma.map(function (v) { return Math.round(v); });
+  if (suwakiKorektora.length) odswiezSuwakiKorektora();
+};
+
 /* ==================================================================
    Skalowanie do dostępnego miejsca.
    Panel samochodowy raz pokazuje aplikację na pełnym ekranie, raz
@@ -984,6 +1076,7 @@ function otworzWyglad() {
   el('panelWyglad').classList.remove('ukryty');
   rysujSkorki();
   rysujPalety();
+  rysujKorektor();
 }
 
 function otworzKatalog() {

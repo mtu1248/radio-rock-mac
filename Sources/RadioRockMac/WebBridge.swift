@@ -62,6 +62,11 @@ final class WebBridge: NSObject, WKScriptMessageHandler {
             audioEngine.ustawUrzadzenieWyjsciowe(uid.isEmpty ? nil : uid)
             UserDefaults.standard.set(uid, forKey: "wyjscieAudioUID")
 
+        case "ustawKorektor":
+            if let pasma = dane["pasma"] as? [Double] {
+                audioEngine.ustawKorektor(pasma.map { Float($0) })
+            }
+
         default:
             break
         }
@@ -113,6 +118,9 @@ final class WebBridge: NSObject, WKScriptMessageHandler {
       },
       ustawUrzadzenie: function(uid) {
         window.webkit.messageHandlers.mac.postMessage({cmd:'ustawUrzadzenie', uid: uid || ''});
+      },
+      ustawKorektor: function(pasma) {
+        window.webkit.messageHandlers.mac.postMessage({cmd:'ustawKorektor', pasma: pasma});
       }
     };
     """

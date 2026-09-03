@@ -54,6 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             DispatchQueue.main.async {
                 self?.odswiezMenuWyjscia()
                 self?.wyslijUrzadzeniaDoJS()
+                self?.wyslijKorektorDoJS()
             }
         }
         deviceAudio.wystartuj()
@@ -70,6 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             guard let url = URL(string: adres) else { return }
             self.webView.load(URLRequest(url: url))
             self.wyslijUrzadzeniaDoJS()
+            self.wyslijKorektorDoJS()
         }
     }
 
@@ -194,6 +196,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
               let json = String(data: dane, encoding: .utf8) else { return }
         let aktualny = audioEngine.wybraneUrzadzenieUID ?? ""
         wyslij("window.zNatywnego_urzadzenia && window.zNatywnego_urzadzenia(\(json), \(jsString(aktualny)));")
+    }
+
+    private func wyslijKorektorDoJS() {
+        guard let wyslij = webBridge.wyslijDoJS else { return }
+        let pasma = audioEngine.wzmocnieniaKorektora.map { Double($0) }
+        guard let dane = try? JSONSerialization.data(withJSONObject: pasma),
+              let json = String(data: dane, encoding: .utf8) else { return }
+        wyslij("window.zNatywnego_korektor && window.zNatywnego_korektor(\(json));")
     }
 
     @objc private func pokazOkno() {

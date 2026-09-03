@@ -39,6 +39,11 @@ final class AudioEngine: NSObject {
     private var ostatniaGlosnosc: Float = 1.0
     private var ostatnieWyciszenie = false
 
+    // Korektor dzwieku (Mac 8.4) - patrz Korektor.swift. Domyslnie "plaski"
+    // (wszystkie pasma 0 dB), nadpisywane w wczytajKorektor() z UserDefaults.
+    private let korektor = Korektor(wzmocnienia: Array(repeating: 0, count: Korektor.liczbaPasm))
+    private(set) var wzmocnieniaKorektora: [Float] = Array(repeating: 0, count: Korektor.liczbaPasm)
+
     private var timerTytulu: Timer?
     private var timerPuls: Timer?
     private var timerPonowienia: Timer?
@@ -50,6 +55,7 @@ final class AudioEngine: NSObject {
 
     override init() {
         super.init()
+        wczytajKorektor()
         wystartujMonitorSieci()
         timerPuls = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
             self?.pulsKontrolny()
@@ -134,6 +140,44 @@ final class AudioEngine: NSObject {
         player?.audioOutputDeviceUniqueID = wybraneUrzadzenieUID
     }
 
+    /// Korektor dzwieku - 10 pasm, wartosci w dB (-12...+12). Wywolywane z
+    /// mostka JS przy kazdym ruchu suwaka albo wyborze presetu (patrz app.js /
+    /// WebBridge.swift). Dziala natychmiast, bez potrzeby wznawiania strumienia,
+    /// i jest trwale zapamietywane w UserDefaults.
+    func ustawKorektor(_ pasma: [Float]) {
+        guard pasma.count == Korektor.liczbaPasm else { return }
+        wzmocnieniaKorektora = pasma
+        korektor.ustawWzmocnienia(pasma)
+        if let dane = try? JSONEncoder().encode(pasma) {
+            UserDefaults.standard.set(dane, forKey: "korektorPasma")
+        }
+    }
+
+    private func wczytajKorektor() {
+        guard let dane = UserDefaults.standard.data(forKey: "korektorPasma"),
+              let odkodowane = try? JSONDecoder().decode([Float].self, from: dane),
+              odkodowane.count == Korektor.liczbaPasm else { return }
+        wzmocnieniaKorektora = odkodowane
+        korektor.ustawWzmocnienia(odkodowane)
+    }
+
+    /// Podpina EQ pod nowy item asynchronicznie. AVAsset.tracks(withMediaType:)
+    /// synchroniczne byloby blokujace (przestarzale) - appka juz raz nauczyla
+    /// sie kosztownie, jak drogo wychodzi kazde nowe zrodlo zawiechy przy
+    /// starcie odtwarzania (patrz CLAUDE.md, "Pulapki"), wiec EQ idzie w pelni
+    /// asynchronicznie i nigdy nie blokuje glownego watku ani startu grania.
+    private func ustawKorektorNaItem(_ item: AVPlayerItem) {
+        Task { [weak self, weak item] in
+            guard let self = self, let item = item else { return }
+            guard let sciezka = (try? await item.asset.loadTracks(withMediaType: .audio))?.first else { return }
+            guard let mix = self.korektor.zbudujAudioMix(dla: sciezka) else { return }
+            await MainActor.run {
+                guard item === self.player?.currentItem else { return }
+                item.audioMix = mix
+            }
+        }
+    }
+
     func zatrzymaj() {
         celowoZatrzymany = true
         player?.pause()
@@ -202,6 +246,7 @@ final class AudioEngine: NSObject {
         nowyPlayer.volume = ostatniaGlosnosc
         nowyPlayer.isMuted = ostatnieWyciszenie
         player = nowyPlayer
+        ustawKorektorNaItem(item)
 
         obserwacjaStatus = item.observe(\.status, options: [.new]) { [weak self] item, _ in
             DispatchQueue.main.async {

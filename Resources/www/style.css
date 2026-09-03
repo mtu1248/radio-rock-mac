@@ -810,6 +810,32 @@ body.tryb-edycji .olowek { opacity: 1; }
 }
 #wyjscieAudio:focus-visible { outline: 2px solid var(--ekran); outline-offset: 1px; }
 
+/* --- korektor dzwieku (tylko Mac) --- */
+#korektorPreset {
+  width: 100%; padding: 8px 10px; margin-bottom: 10px;
+  border: 1px solid var(--panel-linia); border-radius: 6px;
+  background: var(--pole-tlo); color: var(--napis);
+  font: inherit; font-size: 13px; cursor: pointer;
+}
+#korektorPreset:focus-visible { outline: 2px solid var(--ekran); outline-offset: 1px; }
+.korektor-suwaki {
+  display: flex; justify-content: space-between; gap: 4px;
+  padding: 10px 6px 6px;
+  border: 1px solid var(--panel-linia); border-radius: 8px;
+  background: var(--ekran-tlo);
+}
+.korektor-pasmo {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  flex: 1; min-width: 0;
+}
+.korektor-db { font-size: 9.5px; color: var(--ekran); min-height: 12px; }
+.korektor-suwak {
+  -webkit-appearance: slider-vertical;
+  width: 22px; height: 110px; margin: 0;
+  accent-color: var(--ekran);
+}
+.korektor-hz { font-size: 9px; color: var(--napis-slaby); letter-spacing: .02em; }
+
 .znacznik-wlasna {
   margin-left: 7px; padding: 1px 5px; border-radius: 3px;
   font-size: 9px; letter-spacing: .08em; text-transform: uppercase;
