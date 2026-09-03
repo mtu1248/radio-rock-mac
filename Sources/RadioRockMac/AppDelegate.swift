@@ -10,7 +10,7 @@ func jsString(_ tekst: String) -> String {
     return String(json.dropFirst().dropLast())
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavigationDelegate {
 
     private var statusItem: NSStatusItem!
     private var okno: NSWindow!
@@ -70,9 +70,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             self.audioEngine.adresBazowy = adres
             guard let url = URL(string: adres) else { return }
             self.webView.load(URLRequest(url: url))
-            self.wyslijUrzadzeniaDoJS()
-            self.wyslijKorektorDoJS()
+            // Nie wysylamy tu od razu urzadzen/korektora - .load() jest asynchroniczne,
+            // strona (a wiec i window.zNatywnego_*) jeszcze nie istnieje. Prawdziwa,
+            // niezawodna wysylka jest w webView(_:didFinish:) nizej.
         }
+    }
+
+    // MARK: - WKNavigationDelegate
+
+    /// Jedyny wiarygodny moment, zeby wyslac stan (lista urzadzen audio,
+    /// korektor) do JS - strona i jej window.zNatywnego_* na pewno juz
+    /// istnieja. Wczesniej appka probowala wyslac to od razu po webView.load(),
+    /// co jest asynchroniczne i prawie zawsze trafialo w pustke - lista
+    /// urzadzen wygladala na pusta, dopoki jakas PRAWDZIWA zmiana sprzetu
+    /// (np. podlaczenie AirPods) nie wywolala odswiezenia przy okazji.
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        odswiezMenuWyjscia()
+        wyslijUrzadzeniaDoJS()
+        wyslijKorektorDoJS()
     }
 
     private func innaDzialajacaInstancja() -> NSRunningApplication? {
@@ -105,6 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let ramka = NSRect(x: 0, y: 0, width: 1040, height: 680)
         webView = WKWebView(frame: ramka, configuration: config)
         webView.autoresizingMask = [.width, .height]
+        webView.navigationDelegate = self
 
         okno = NSWindow(contentRect: ramka,
                          styleMask: [.titled, .closable, .miniaturizable, .resizable],

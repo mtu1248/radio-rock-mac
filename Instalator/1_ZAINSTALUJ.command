@@ -1,5 +1,5 @@
 #!/bin/bash
-# Radio Rock (Mac 8.5) — instalacja. Usuwa poprzednia wersje i wgrywa nowa.
+# Radio Rock (Mac 8.6) — instalacja. Usuwa poprzednia wersje i wgrywa nowa.
 
 KATALOG="$(cd "$(dirname "$0")" && pwd)"
 CEL="/Applications/Radio Rock.app"
@@ -7,7 +7,7 @@ ZRODLO="$KATALOG/Radio Rock.app"
 
 clear
 echo ""
-echo "  ── INSTALACJA RADIO ROCK 8.5 (Mac) ───────────────────"
+echo "  ── INSTALACJA RADIO ROCK 8.6 (Mac) ───────────────────"
 echo ""
 
 if [ ! -d "$ZRODLO" ]; then

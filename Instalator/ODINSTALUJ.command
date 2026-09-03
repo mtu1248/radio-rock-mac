@@ -1,5 +1,5 @@
 #!/bin/bash
-# Radio Rock (Mac 8.5) — odinstalowanie.
+# Radio Rock (Mac 8.6) — odinstalowanie.
 
 clear
 echo ""
