@@ -27,6 +27,10 @@ final class Korektor {
     private var czestotliwoscProbkowania: Double = 44100
     private var filtry: [[Biquad]] = []   // [kanal][pasmo]
     private let blokada = NSLock()
+    // Format bufora zalezy od zrodla (patrz przetworz() nizej) - ustawiane w
+    // przygotuj() na podstawie kAudioFormatFlagIsNonInterleaved.
+    private var czyPrzeplecione = false
+    private var zalogowanoPierwszyBlok = false
 
     init(wzmocnienia: [Float]) {
         self.wzmocnienia = wzmocnienia
@@ -43,28 +47,66 @@ final class Korektor {
     /// Wolane z watku audio (callback "prepare" tapu) przy starcie kazdego
     /// nowego itemu - stan filtrow startuje na zero, co jest poprawne (nowy
     /// strumien = nowy sygnal, zadnych "resztek" z poprzedniej stacji).
-    fileprivate func przygotuj(liczbaKanalow: Int, fs: Double) {
+    fileprivate func przygotuj(liczbaKanalow: Int, fs: Double, przeplecione: Bool) {
         blokada.lock()
         czestotliwoscProbkowania = fs > 0 ? fs : 44100
         let kanaly = max(1, liczbaKanalow)
+        czyPrzeplecione = przeplecione
+        zalogowanoPierwszyBlok = false
         filtry = (0..<kanaly).map { _ in (0..<Self.liczbaPasm).map { _ in Biquad() } }
         przeliczCoefy()
         blokada.unlock()
+        NSLog("Radio Rock: korektor przygotowany - kanaly=%d fs=%.0f przeplecione=%@",
+              kanaly, czestotliwoscProbkowania, przeplecione ? "TAK" : "NIE")
     }
 
     /// Wolane z watku audio (callback "process" tapu) dla kazdego bloku probek.
+    ///
+    /// Format bufora NIE jest gwarantowany przez MTAudioProcessingTap: zrodlo
+    /// moze dawac probki NIEPRZEPLECIONE (osobny AudioBuffer na kanal,
+    /// mNumberChannels==1 kazdy) albo PRZEPLECIONE (jeden AudioBuffer,
+    /// mNumberChannels==N, probki L/P/L/P na przemian w jednej tablicy).
+    /// Wersje 8.4-8.6 zakladaly wylacznie pierwszy przypadek - gdy zrodlo
+    /// dawalo probki przeplecione, warunek "mNumberChannels == 1" nigdy nie
+    /// byl prawdziwy, wiec KAZDY blok byl cicho pomijany: UI korektora
+    /// dzialalo (suwaki, presety), ale dzwiek w ogole nie przechodzil przez
+    /// filtry - dokladnie objaw zgloszony po 8.6 ("korektor graficznie
+    /// dziala ale nie zmienia dzwieku"). Naprawa (8.7): rozgaleziamy wedlug
+    /// flagi ustawionej w przygotuj() (patrz korektorTapPrepare nizej).
     fileprivate func przetworz(bufory: UnsafeMutableAudioBufferListPointer) {
         blokada.lock()
         defer { blokada.unlock() }
         guard !filtry.isEmpty else { return }
-        for i in 0..<bufory.count {
-            guard bufory[i].mNumberChannels == 1, let dane = bufory[i].mData else { continue }
-            let liczbaProbek = Int(bufory[i].mDataByteSize) / MemoryLayout<Float>.size
-            guard liczbaProbek > 0 else { continue }
+
+        if !zalogowanoPierwszyBlok {
+            zalogowanoPierwszyBlok = true
+            NSLog("Radio Rock: korektor przetwarza pierwszy blok - buforow=%d przeplecione=%@",
+                  bufory.count, czyPrzeplecione ? "TAK" : "NIE")
+        }
+
+        if czyPrzeplecione {
+            guard let pierwszy = bufory.first, let dane = pierwszy.mData else { return }
+            let kanaly = Int(pierwszy.mNumberChannels)
+            guard kanaly > 0 else { return }
+            let liczbaProbek = Int(pierwszy.mDataByteSize) / MemoryLayout<Float>.size
+            guard liczbaProbek > 0 else { return }
             let wskaznik = dane.bindMemory(to: Float.self, capacity: liczbaProbek)
-            let kanal = i % filtry.count
-            for pasmo in 0..<Self.liczbaPasm {
-                filtry[kanal][pasmo].przetworzBlok(wskaznik, liczbaProbek)
+            let liczbaRamek = liczbaProbek / kanaly
+            for kanal in 0..<min(kanaly, filtry.count) {
+                for pasmo in 0..<Self.liczbaPasm {
+                    filtry[kanal][pasmo].przetworzZKrokiem(wskaznik + kanal, liczbaRamek, krok: kanaly)
+                }
+            }
+        } else {
+            for i in 0..<bufory.count {
+                guard bufory[i].mNumberChannels == 1, let dane = bufory[i].mData else { continue }
+                let liczbaProbek = Int(bufory[i].mDataByteSize) / MemoryLayout<Float>.size
+                guard liczbaProbek > 0 else { continue }
+                let wskaznik = dane.bindMemory(to: Float.self, capacity: liczbaProbek)
+                let kanal = i % filtry.count
+                for pasmo in 0..<Self.liczbaPasm {
+                    filtry[kanal][pasmo].przetworzBlok(wskaznik, liczbaProbek)
+                }
             }
         }
     }
@@ -105,8 +147,10 @@ final class Korektor {
 
         let parametry = AVMutableAudioMixInputParameters(track: sciezka)
         parametry.audioTapProcessor = tap.takeUnretainedValue()
+        tapOut?.release()   // AVFoundation zrobila wlasny CFRetain przy przypisaniu do audioTapProcessor
         let mix = AVMutableAudioMix()
         mix.inputParameters = [parametry]
+        NSLog("Radio Rock: korektor - AVAudioMix zbudowany dla sciezki")
         return mix
     }
 }
@@ -146,6 +190,21 @@ private struct Biquad {
             dane[i] = y
         }
     }
+
+    /// Jak przetworzBlok, ale dla probek przeplecionych (np. stereo L/P/L/P...)
+    /// - `dane` wskazuje juz na probke PIERWSZEGO kanalu tego wywolania
+    /// (przesuniecie o numer kanalu robi wywolujacy), `krok` to liczba
+    /// kanalow w strumieniu (odleglosc miedzy kolejnymi probkami TEGO kanalu).
+    mutating func przetworzZKrokiem(_ dane: UnsafeMutablePointer<Float>, _ liczba: Int, krok: Int) {
+        for i in 0..<liczba {
+            let idx = i * krok
+            let x = dane[idx]
+            let y = b0 * x + z1
+            z1 = b1 * x - a1 * y + z2
+            z2 = b2 * x - a2 * y
+            dane[idx] = y
+        }
+    }
 }
 
 // MARK: - Callbacki C dla MTAudioProcessingTap
@@ -169,7 +228,8 @@ private func korektorTapPrepare(_ tap: MTAudioProcessingTap,
     guard let storage = MTAudioProcessingTapGetStorage(tap) as UnsafeMutableRawPointer? else { return }
     let korektor = Unmanaged<Korektor>.fromOpaque(storage).takeUnretainedValue()
     let format = processingFormat.pointee
-    korektor.przygotuj(liczbaKanalow: Int(format.mChannelsPerFrame), fs: format.mSampleRate)
+    let przeplecione = (format.mFormatFlags & kAudioFormatFlagIsNonInterleaved) == 0
+    korektor.przygotuj(liczbaKanalow: Int(format.mChannelsPerFrame), fs: format.mSampleRate, przeplecione: przeplecione)
 }
 
 private func korektorTapUnprepare(_ tap: MTAudioProcessingTap) {

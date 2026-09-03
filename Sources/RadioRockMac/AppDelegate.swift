@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
     private let deviceAudio = DeviceAudio()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSLog("Radio Rock: applicationDidFinishLaunching start, PID=%d", ProcessInfo.processInfo.processIdentifier)
         if let inna = innaDzialajacaInstancja() {
             NSLog("Radio Rock: inna instancja juz dziala (PID %d) - aktywuje ja i konczy ta kopie",
                   inna.processIdentifier)
@@ -42,6 +43,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
 
         przygotujOkno()
         przygotujStatusItem()
+        NSLog("Radio Rock: statusItem utworzony, dlugosc=%.0f, isVisible=%@",
+              statusItem.length, statusItem.isVisible ? "TAK" : "NIE")
         przygotujKomendyMultimedialne()
 
         webBridge.wyslijDoJS = { [weak self] js in
@@ -98,6 +101,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        NSLog("Radio Rock: applicationWillTerminate, PID=%d", ProcessInfo.processInfo.processIdentifier)
         audioEngine.zatrzymaj()
         serwer.zatrzymaj()
     }
@@ -145,6 +149,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
 
     private func przygotujStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        // autosaveName: AppKit zapamietuje pozycje/widocznosc ikony w pasku menu
+        // (zamiast liczyc ja od zera przy kazdym starcie) - jesli system schowa
+        // ja w przepelnionym pasku menu albo user ja recznie przesunie, ta sama
+        // nazwa pozwala wrocic do zapamietanego stanu zamiast losowej pozycji
+        // na koncu paska przy kazdym uruchomieniu appki.
+        statusItem.autosaveName = "RadioRockPasekMenu"
         if let przycisk = statusItem.button {
             let obraz = NSImage(systemSymbolName: "antenna.radiowaves.left.and.right",
                                  accessibilityDescription: "Radio Rock")

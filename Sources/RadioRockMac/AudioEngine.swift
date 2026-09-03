@@ -169,11 +169,21 @@ final class AudioEngine: NSObject {
     private func ustawKorektorNaItem(_ item: AVPlayerItem) {
         Task { [weak self, weak item] in
             guard let self = self, let item = item else { return }
-            guard let sciezka = (try? await item.asset.loadTracks(withMediaType: .audio))?.first else { return }
-            guard let mix = self.korektor.zbudujAudioMix(dla: sciezka) else { return }
+            guard let sciezka = (try? await item.asset.loadTracks(withMediaType: .audio))?.first else {
+                NSLog("Radio Rock: korektor - nie znaleziono sciezki audio w itemie, EQ nie zostanie podpiety")
+                return
+            }
+            guard let mix = self.korektor.zbudujAudioMix(dla: sciezka) else {
+                NSLog("Radio Rock: korektor - zbudujAudioMix zwrocilo nil, EQ nie zostanie podpiety")
+                return
+            }
             await MainActor.run {
-                guard item === self.player?.currentItem else { return }
+                guard item === self.player?.currentItem else {
+                    NSLog("Radio Rock: korektor - item juz nieaktualny (zmieniono stacje w trakcie ladowania), pomijam podpiecie")
+                    return
+                }
                 item.audioMix = mix
+                NSLog("Radio Rock: korektor - audioMix podpieta do biezacego itemu")
             }
         }
     }
